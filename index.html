@@ -68,12 +68,12 @@
             
             <!-- Role Toggle -->
             <div class="flex gap-2 mb-6 p-1 bg-slate-100 rounded-lg">
-                <button id="tab-lead" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-medium text-indigo-600 transition-all" onclick="setLoginTab('lead')">Team Lead</button>
-                <button id="tab-member" class="flex-1 py-2 rounded-md text-slate-500 text-sm font-medium transition-all hover:text-slate-700" onclick="setLoginTab('member')">Team Member</button>
+                <button id="tab-lead" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-medium text-indigo-600 transition-all" onclick="window.handleSetLoginTab('lead')">Team Lead</button>
+                <button id="tab-member" class="flex-1 py-2 rounded-md text-slate-500 text-sm font-medium transition-all hover:text-slate-700" onclick="window.handleSetLoginTab('member')">Team Member</button>
             </div>
 
             <!-- Team Lead Form -->
-            <form id="form-lead" onsubmit="handleLeadLogin(event)">
+            <form id="form-lead" onsubmit="window.handleLeadLogin(event)">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Lead Password</label>
                 <input type="password" id="lead-password" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-sm" placeholder="Enter password">
                 <p id="lead-error" class="text-red-500 text-xs mb-4 hidden font-medium">Incorrect password. Please try again.</p>
@@ -81,7 +81,7 @@
             </form>
 
             <!-- Team Member Form -->
-            <form id="form-member" class="hidden" onsubmit="handleMemberLogin(event)">
+            <form id="form-member" class="hidden" onsubmit="window.handleMemberLogin(event)">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Select your profile</label>
                 <select id="member-select" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-base sm:text-sm">
                     <!-- Populated by JS -->
@@ -103,16 +103,16 @@
             </div>
             
             <nav class="flex-1 px-4 py-6 space-y-2">
-                <button onclick="switchView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="dashboard">
+                <button onclick="window.handleSwitchView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="dashboard">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
                 </button>
-                <button onclick="switchView('tasks')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-indigo-600 bg-indigo-50" data-view="tasks">
+                <button onclick="window.handleSwitchView('tasks')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-indigo-600 bg-indigo-50" data-view="tasks">
                     <i data-lucide="list-todo" class="w-5 h-5"></i> Tasks
                 </button>
-                <button id="nav-reports-desktop" onclick="switchView('reports')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hidden" data-view="reports">
+                <button id="nav-reports-desktop" onclick="window.handleSwitchView('reports')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hidden" data-view="reports">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Reports
                 </button>
-                <button onclick="switchView('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="settings">
+                <button onclick="window.handleSwitchView('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="settings">
                     <i data-lucide="settings" class="w-5 h-5"></i> Settings
                 </button>
             </nav>
@@ -274,7 +274,7 @@
                             
                             <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-sm">
                                 <span id="task-count" class="text-slate-500 font-medium">0 tasks remaining</span>
-                                <button id="clear-completed" class="text-slate-400 hover:text-red-500 transition-colors hidden font-medium">
+                                <button id="clear-completed" onclick="window.handleClearAllData()" class="text-slate-400 hover:text-red-500 transition-colors hidden font-medium">
                                     Clear completed
                                 </button>
                             </div>
@@ -286,7 +286,7 @@
                 <div id="view-reports" class="hidden animate-fade-in">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Daily Reports</h1>
-                        <button onclick="archiveDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <button onclick="window.handleArchiveDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center">
                             <i data-lucide="archive" class="w-4 h-4"></i> End Day & Record
                         </button>
                     </div>
@@ -331,7 +331,7 @@
                                     <p class="text-xs sm:text-sm text-slate-500" id="profile-role">Role</p>
                                 </div>
                             </div>
-                            <button onclick="logout()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto">
+                            <button onclick="window.handleLogout()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto">
                                 <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
                             </button>
                         </div>
@@ -347,7 +347,7 @@
                                 <p class="text-xs sm:text-sm text-slate-500">Automatically end the day and record progress at 8:00 AM (PHT).</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                                <input type="checkbox" id="auto-record-toggle" class="sr-only peer" onchange="toggleAutoRecord(event)">
+                                <input type="checkbox" id="auto-record-toggle" class="sr-only peer" onchange="window.handleToggleAutoRecord(event)">
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                             </label>
                         </div>
@@ -362,7 +362,7 @@
                             <p class="text-xs sm:text-sm text-slate-500">Add new members and set their rest days.</p>
                         </div>
                         <div class="p-4 sm:p-6 space-y-4">
-                            <form onsubmit="addTeamMember(event)" class="flex flex-col gap-3">
+                            <form onsubmit="window.handleAddTeamMember(event)" class="flex flex-col gap-3">
                                 <div class="flex flex-col sm:flex-row gap-3">
                                     <input type="text" id="new-member-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-base sm:text-sm" placeholder="New member's full name" required>
                                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
@@ -395,7 +395,7 @@
                             <p class="text-xs sm:text-sm text-slate-500">Create predefined categories for grouping tasks.</p>
                         </div>
                         <div class="p-4 sm:p-6 space-y-4">
-                            <form onsubmit="addCategory(event)" class="flex flex-col sm:flex-row gap-3">
+                            <form onsubmit="window.handleAddCategory(event)" class="flex flex-col sm:flex-row gap-3">
                                 <input type="text" id="new-category-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-base sm:text-sm" placeholder="New category name (e.g. Morning Shift)" required>
                                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Add
@@ -414,7 +414,7 @@
                                 <i data-lucide="alert-triangle" class="w-4 h-4 sm:w-5 sm:h-5"></i> Danger Zone
                             </h2>
                             <p class="text-xs sm:text-sm text-red-600 mb-4">This action cannot be undone. It will permanently delete all tasks.</p>
-                            <button onclick="clearAllData()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
+                            <button onclick="window.handleClearAllData()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
                                 <i data-lucide="trash" class="w-4 h-4"></i> Delete All Data
                             </button>
                         </div>
@@ -426,19 +426,19 @@
 
         <!-- Mobile Bottom Navigation (Safe Area compatible) -->
         <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around mobile-nav-safe pt-2 px-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <button onclick="switchView('dashboard')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="dashboard">
+            <button onclick="window.handleSwitchView('dashboard')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="dashboard">
                 <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">Dashboard</span>
             </button>
-            <button onclick="switchView('tasks')" class="nav-item-mobile flex flex-col items-center p-2 text-indigo-600 transition-colors" data-view="tasks">
+            <button onclick="window.handleSwitchView('tasks')" class="nav-item-mobile flex flex-col items-center p-2 text-indigo-600 transition-colors" data-view="tasks">
                 <i data-lucide="list-todo" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">Tasks</span>
             </button>
-            <button id="nav-reports-mobile" onclick="switchView('reports')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors hidden" data-view="reports">
+            <button id="nav-reports-mobile" onclick="window.handleSwitchView('reports')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors hidden" data-view="reports">
                 <i data-lucide="bar-chart-3" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">Reports</span>
             </button>
-            <button onclick="switchView('settings')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="settings">
+            <button onclick="window.handleSwitchView('settings')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="settings">
                 <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">Settings</span>
             </button>
@@ -461,12 +461,12 @@
     <div id="edit-modal" class="fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-200 p-4">
         <div class="bg-white rounded-2xl p-5 sm:p-6 max-w-md w-full mx-auto shadow-xl transform scale-95 transition-transform duration-200 max-h-[90vh] flex flex-col" id="edit-modal-content">
             <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3 flex-shrink-0">Edit</h3>
-            <form id="edit-modal-form" onsubmit="handleEditFormSubmit(event)" class="overflow-y-auto no-scrollbar flex-1">
+            <form id="edit-modal-form" onsubmit="window.handleEditFormSubmit(event)" class="overflow-y-auto no-scrollbar flex-1">
                 <div id="edit-modal-body" class="space-y-4">
                     <!-- Injected Dynamically -->
                 </div>
                 <div class="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-100 flex-shrink-0">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                    <button type="button" onclick="window.handleCloseEditModal()" class="px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
                     <button type="submit" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm">Save Changes</button>
                 </div>
             </form>
@@ -479,6 +479,7 @@
         import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Initialization ---
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
         const firebaseConfig = {
             apiKey: "AIzaSyAHxm-HBYtgujRLiGkuYyo8Ho7tTQGqj-E",
             authDomain: "taskmaster-13e85.firebaseapp.com",
@@ -500,7 +501,7 @@
         const modalContainer = document.getElementById('custom-modal');
         const modalContent = document.getElementById('custom-modal-content');
 
-        window.showModal = function(title, message, isConfirm, callback) {
+        window.handleShowModal = function(title, message, isConfirm, callback) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
             
@@ -525,7 +526,7 @@
             modalContent.classList.remove('scale-95');
         }
 
-        window.closeModal = function(result) {
+        window.handleCloseModal = function(result) {
             modalContainer.classList.add('opacity-0');
             modalContent.classList.add('scale-95');
             
@@ -536,15 +537,15 @@
             }, 200);
         }
 
-        document.getElementById('modal-btn-cancel').addEventListener('click', () => window.closeModal(false));
-        document.getElementById('modal-btn-confirm').addEventListener('click', () => window.closeModal(true));
+        document.getElementById('modal-btn-cancel').addEventListener('click', () => window.handleCloseModal(false));
+        document.getElementById('modal-btn-confirm').addEventListener('click', () => window.handleCloseModal(true));
 
         // --- Edit Form Modal Logic ---
         let currentEditContext = null;
         const editModalContainer = document.getElementById('edit-modal');
         const editModalContent = document.getElementById('edit-modal-content');
 
-        window.openEditModal = function(title, htmlContent, context) {
+        window.handleOpenEditModal = function(title, htmlContent, context) {
             document.getElementById('edit-modal-title').textContent = title;
             document.getElementById('edit-modal-body').innerHTML = htmlContent;
             currentEditContext = context;
@@ -555,7 +556,7 @@
             editModalContent.classList.remove('scale-95');
         }
 
-        window.closeEditModal = function() {
+        window.handleCloseEditModal = function() {
             editModalContainer.classList.add('opacity-0');
             editModalContent.classList.add('scale-95');
             
@@ -576,7 +577,7 @@
                 
                 if (newName && newName !== oldName) {
                     if (taskCategories.includes(newName)) {
-                        window.showModal("Duplicate", "This category already exists.", false);
+                        window.handleShowModal("Duplicate", "This category already exists.", false);
                         return;
                     }
                     const updatedCats = [...taskCategories];
@@ -612,7 +613,7 @@
                 const resetInterval = newMins > 0 ? newMins * 60000 : null;
 
                 if (newCount > 0 && !resetInterval) {
-                    window.showModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
+                    window.handleShowModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
                     return; 
                 }
 
@@ -629,7 +630,7 @@
                     });
                 }
             }
-            window.closeEditModal();
+            window.handleCloseEditModal();
         }
 
         // --- PHT Time Helper Functions ---
@@ -674,7 +675,7 @@
                 await signInAnonymously(auth);
             } catch (error) {
                 console.error("Firebase Auth Error:", error);
-                window.showModal("Configuration Needed", "Paki-enable ang 'Anonymous' sign-in sa iyong Firebase Console -> Authentication.", false);
+                window.handleShowModal("Configuration Needed", "Paki-enable ang 'Anonymous' sign-in sa iyong Firebase Console -> Authentication.", false);
             }
         };
 
@@ -708,7 +709,7 @@
                     updateUserData();
                     renderSettings();
                 } else if (!currentUser && savedUserId) {
-                    window.logout();
+                    window.handleLogout();
                 }
             }, console.error);
 
@@ -761,12 +762,12 @@
                 updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), {
                     lastAutoRecordDate: todayStr
                 }).then(() => {
-                    window.performArchiveDay(true);
+                    window.handlePerformArchiveDay(true);
                 }).catch(console.error);
             }
         }
 
-        window.toggleAutoRecord = function(e) {
+        window.handleToggleAutoRecord = function(e) {
             if (!fbUser || !currentUser || currentUser.role !== 'lead') return;
             const isEnabled = e.target.checked;
             setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { autoRecordEnabled: isEnabled }, { merge: true })
@@ -774,7 +775,7 @@
         };
 
         // --- Login Logic ---
-        window.setLoginTab = function(tab) {
+        window.handleSetLoginTab = function(tab) {
             const btnLead = document.getElementById('tab-lead');
             const btnMember = document.getElementById('tab-member');
             const formLead = document.getElementById('form-lead');
@@ -842,10 +843,10 @@
             updateUserData();
             renderCategoryDropdown();
             renderTasks();
-            window.switchView('tasks');
+            window.handleSwitchView('tasks');
         }
 
-        window.logout = function() {
+        window.handleLogout = function() {
             currentUser = null;
             localStorage.removeItem('todo_logged_in_user');
             
@@ -854,11 +855,11 @@
             document.getElementById('login-container').classList.remove('hidden');
             document.getElementById('login-container').classList.add('flex');
             
-            window.setLoginTab('lead');
+            window.handleSetLoginTab('lead');
         };
 
         // --- View Navigation ---
-        window.switchView = function(viewName) {
+        window.handleSwitchView = function(viewName) {
             document.getElementById('view-dashboard').classList.add('hidden');
             document.getElementById('view-tasks').classList.add('hidden');
             document.getElementById('view-settings').classList.add('hidden');
@@ -948,8 +949,8 @@
                         
                         const actionsHtml = `
                             <div class="flex items-center gap-1 mt-2 sm:mt-0">
-                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-colors" title="Edit Member"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                <button onclick="deleteMember('${t.id}')" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors ml-1" title="Delete Member"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.handleEditMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-colors" title="Edit Member"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.handleDeleteMember('${t.id}')" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors ml-1" title="Delete Member"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
 
@@ -983,16 +984,16 @@
                         <li class="flex justify-between items-center p-4 bg-white hover:bg-slate-50 transition-colors">
                             <span class="font-medium text-slate-700 flex items-center gap-2 text-sm sm:text-base"><i data-lucide="tag" class="w-4 h-4 text-slate-400"></i> ${escapeHtml(c)}</span>
                             <div class="flex items-center gap-1 sm:gap-2">
-                                <button onclick="moveCategory(${index}, -1)" class="transition-colors p-2 rounded-lg focus:outline-none ${upDisabled} hidden sm:block" ${index === 0 ? 'disabled' : ''} title="Move Up">
+                                <button onclick="window.handleMoveCategory(${index}, -1)" class="transition-colors p-2 rounded-lg focus:outline-none ${upDisabled} hidden sm:block" ${index === 0 ? 'disabled' : ''} title="Move Up">
                                     <i data-lucide="arrow-up" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="moveCategory(${index}, 1)" class="transition-colors p-2 rounded-lg focus:outline-none ${downDisabled} hidden sm:block" ${index === taskCategories.length - 1 ? 'disabled' : ''} title="Move Down">
+                                <button onclick="window.handleMoveCategory(${index}, 1)" class="transition-colors p-2 rounded-lg focus:outline-none ${downDisabled} hidden sm:block" ${index === taskCategories.length - 1 ? 'disabled' : ''} title="Move Down">
                                     <i data-lucide="arrow-down" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="editCategory(${index}, '${escapeHtml(c)}')" class="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-indigo-50 focus:outline-none sm:ml-2" title="Edit">
+                                <button onclick="window.handleEditCategory(${index}, '${escapeHtml(c)}')" class="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-indigo-50 focus:outline-none sm:ml-2" title="Edit">
                                     <i data-lucide="edit-2" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="deleteCategory(${index})" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="Delete">
+                                <button onclick="window.handleDeleteCategory(${index})" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="Delete">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -1011,16 +1012,16 @@
         }
 
         // --- Edit Form Triggers ---
-        window.editCategory = function(index, oldName) {
+        window.handleEditCategory = function(index, oldName) {
             if (currentUser.role !== 'lead' || !fbUser) return;
             const html = `
                 <label class="block text-sm font-medium text-slate-700 mb-1">Category Name</label>
                 <input type="text" id="edit-cat-input" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${oldName}" required>
             `;
-            window.openEditModal('Edit Category', html, { type: 'category', index, oldName });
+            window.handleOpenEditModal('Edit Category', html, { type: 'category', index, oldName });
         };
 
-        window.editMember = function(memberId) {
+        window.handleEditMember = function(memberId) {
             if (currentUser.role !== 'lead' || !fbUser) return;
             const member = team.find(t => t.id === memberId);
             if (!member) return;
@@ -1044,22 +1045,28 @@
                 <input type="text" id="edit-mem-name" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm" value="${escapeHtml(member.name)}" required>
                 ${checksHtml}
             `;
-            window.openEditModal('Edit Profile', html, { type: 'member', memberId });
+            window.handleOpenEditModal('Edit Profile', html, { type: 'member', memberId });
         };
 
-        window.deleteMember = function(memberId) {
+        window.handleDeleteMember = function(memberId) {
             if (currentUser.role !== 'lead' || !fbUser) return;
-            window.showModal("Delete Member", "Are you sure? This will permanently remove the member from your team.", true, (confirmed) => {
+            window.handleShowModal("Delete Member", "Are you sure? This will permanently remove the member from your team.", true, (confirmed) => {
                 if (confirmed) {
                     deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', memberId)).catch(console.error);
+                    
+                    todos.forEach(t => {
+                        if (t.assigneeId === memberId) {
+                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                        }
+                    });
                 }
             });
         };
 
-        window.editTodoGroup = function(groupId, text) {
+        window.handleEditTodoGroup = function(groupId, taskId) {
             if (currentUser.role !== 'lead' || !fbUser) return;
             
-            const representative = todos.find(t => (groupId && t.groupId === groupId) || (!groupId && t.text === text));
+            const representative = todos.find(t => t.id === taskId);
             if (!representative) return;
 
             const catOptions = taskCategories.map(c => 
@@ -1090,11 +1097,11 @@
                 </div>
             `;
 
-            window.openEditModal('Edit Task Assignment', html, { type: 'task', groupId, text });
+            window.handleOpenEditModal('Edit Task Assignment', html, { type: 'task', groupId, text: representative.text });
         };
 
         // --- Management Operations ---
-        window.addCategory = function(e) {
+        window.handleAddCategory = function(e) {
             e.preventDefault();
             if (!fbUser || !currentUser) return;
             const input = document.getElementById('new-category-name');
@@ -1105,11 +1112,35 @@
                     .catch(console.error);
                 input.value = '';
             } else if (taskCategories.includes(name)) {
-                window.showModal("Duplicate", "This category already exists.", false);
+                window.handleShowModal("Duplicate", "This category already exists.", false);
             }
         };
 
-        window.addTeamMember = function(e) {
+        window.handleDeleteCategory = function(index) {
+            if (currentUser && currentUser.role === 'lead' && fbUser) {
+                window.handleShowModal("Delete Category", `Are you sure you want to delete the category "${taskCategories[index]}"?`, true, (confirmed) => {
+                    if (confirmed) {
+                        const updatedCats = [...taskCategories];
+                        updatedCats.splice(index, 1);
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
+                            .catch(console.error);
+                    }
+                });
+            }
+        };
+
+        window.handleMoveCategory = function(index, direction) {
+            if (!currentUser || currentUser.role !== 'lead' || !fbUser) return;
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < taskCategories.length) {
+                const updatedCats = [...taskCategories];
+                [updatedCats[index], updatedCats[newIndex]] = [updatedCats[newIndex], updatedCats[index]];
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
+                    .catch(console.error);
+            }
+        };
+
+        window.handleAddTeamMember = function(e) {
             e.preventDefault();
             if (!fbUser || !currentUser) return;
             const input = document.getElementById('new-member-name');
@@ -1131,14 +1162,14 @@
             }
         };
 
-        window.clearAllData = function() {
+        window.handleClearAllData = function() {
             if (!fbUser || !currentUser) return;
-            window.showModal("Delete All Tasks", "Are you sure? This will permanently delete all tasks for the ENTIRE team.", true, (confirmed) => {
+            window.handleShowModal("Delete All Tasks", "Are you sure? This will permanently delete all tasks for the ENTIRE team.", true, (confirmed) => {
                 if(confirmed) {
                     todos.forEach(t => {
                         deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
                     });
-                    window.switchView('tasks');
+                    window.handleSwitchView('tasks');
                 }
             });
         };
@@ -1235,10 +1266,10 @@
             }
         }
 
-        window.performArchiveDay = function(isSilent = false) {
+        window.handlePerformArchiveDay = function(isSilent = false) {
             if (!currentUser || currentUser.role !== 'lead' || !fbUser) return;
             if (todos.length === 0) {
-                if (!isSilent) window.showModal("Nothing to Record", "There are no active tasks to record today.", false);
+                if (!isSilent) window.handleShowModal("Nothing to Record", "There are no active tasks to record today.", false);
                 return;
             }
             
@@ -1272,20 +1303,20 @@
                     deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
                 });
                 
-                if (!isSilent) window.showModal("Success", "Progress recorded successfully! Tasks have been cleared for tomorrow.", false);
+                if (!isSilent) window.handleShowModal("Success", "Progress recorded successfully! Tasks have been cleared for tomorrow.", false);
             };
 
             if (isSilent) {
                 executeArchive();
             } else {
-                window.showModal("End Day & Record", "Are you sure you want to record today's progress and clear all active tasks for tomorrow?", true, (confirmed) => {
+                window.handleShowModal("End Day & Record", "Are you sure you want to record today's progress and clear all active tasks for tomorrow?", true, (confirmed) => {
                     if (confirmed) executeArchive();
                 });
             }
         };
 
-        window.archiveDay = function() {
-            window.performArchiveDay(false);
+        window.handleArchiveDay = function() {
+            window.handlePerformArchiveDay(false);
         };
 
         // --- Tasks Logic (Core App) ---
@@ -1309,7 +1340,8 @@
                         groupedMap.set(key, { 
                             isGroup: true, key: key, text: t.text, category: t.category || 'General',
                             total: 0, completed: 0, groupId: t.groupId, isRepetitive: !!t.resetInterval,
-                            resetInterval: t.resetInterval, maxCompletions: t.maxCompletions
+                            resetInterval: t.resetInterval, maxCompletions: t.maxCompletions,
+                            taskId: t.id
                         });
                         displayItems.push(groupedMap.get(key));
                     }
@@ -1409,10 +1441,10 @@
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all focus-within:opacity-100">
-                                        <button onclick="editTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                                        <button onclick="window.handleEditTodoGroup('${item.groupId || ''}', '${item.taskId}')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
                                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                                         </button>
-                                        <button onclick="deleteTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                        <button onclick="window.handleDeleteTodoGroup('${item.groupId || ''}', '${item.taskId}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
@@ -1425,7 +1457,7 @@
                             const checkboxClasses = item.completed ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 hover:border-indigo-400 bg-white';
 
                             li.className = `group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md gap-3 sm:gap-0 cursor-pointer` ;
-                            li.onclick = () => window.toggleTodo(item.id);
+                            li.onclick = () => window.handleToggleTodo(item.id);
                             li.innerHTML = `
                                 <div class="flex items-center gap-3 flex-1 min-w-0">
                                     <button class="checkbox-transition flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${checkboxClasses}">
@@ -1483,11 +1515,11 @@
                     const activeMembers = members.filter(t => !(t.restDays && t.restDays.includes(currentDayName)));
                     
                     if (members.length === 0) {
-                        window.showModal("No Members Found", "Please add team members in the Settings menu before creating tasks.", false);
+                        window.handleShowModal("No Members Found", "Please add team members in the Settings menu before creating tasks.", false);
                         return;
                     }
                     if (activeMembers.length === 0) {
-                        window.showModal("All Members on Rest", "All team members are on their rest day today (" + currentDayName + ").", false);
+                        window.handleShowModal("All Members on Rest", "All team members are on their rest day today (" + currentDayName + ").", false);
                         return;
                     }
 
@@ -1502,7 +1534,7 @@
                     const maxCompletions = repeatCountInput && repeatCountInput.value ? parseInt(repeatCountInput.value) : null;
                     
                     if (maxCompletions > 0 && !resetInterval) {
-                        window.showModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
+                        window.handleShowModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
                         return;
                     }
 
@@ -1531,37 +1563,43 @@
             });
         }
 
-        if (clearCompletedBtn) {
-            clearCompletedBtn.addEventListener('click', () => {
-                if(currentUser && currentUser.role === 'lead' && fbUser) {
-                    const groupedMap = new Map();
-                    todos.forEach(t => {
-                        const key = t.groupId || t.text;
-                        if (!groupedMap.has(key)) groupedMap.set(key, { total: 0, completed: 0 });
-                        const group = groupedMap.get(key);
-                        group.total += 1;
-                        const isFullyDone = t.completed && (!t.maxCompletions || (t.currentCompletions || 0) >= t.maxCompletions);
-                        if (isFullyDone) group.completed += 1;
-                    });
-                    
-                    const completedKeys = new Set();
-                    groupedMap.forEach((val, key) => {
-                        if (val.total > 0 && val.completed === val.total) {
-                            completedKeys.add(key);
-                        }
-                    });
+        window.handleClearTodoCompleted = function() {
+            if(currentUser && currentUser.role === 'lead' && fbUser) {
+                window.handleShowModal("Clear Completed", "Are you sure you want to clear all fully completed tasks from the list?", true, (confirmed) => {
+                    if (confirmed) {
+                        const groupedMap = new Map();
+                        todos.forEach(t => {
+                            const key = t.groupId || t.text;
+                            if (!groupedMap.has(key)) groupedMap.set(key, { total: 0, completed: 0 });
+                            const group = groupedMap.get(key);
+                            group.total += 1;
+                            const isFullyDone = t.completed && (!t.maxCompletions || (t.currentCompletions || 0) >= t.maxCompletions);
+                            if (isFullyDone) group.completed += 1;
+                        });
+                        
+                        const completedKeys = new Set();
+                        groupedMap.forEach((val, key) => {
+                            if (val.total > 0 && val.completed === val.total) {
+                                completedKeys.add(key);
+                            }
+                        });
 
-                    todos.forEach(t => {
-                        const key = t.groupId || t.text;
-                        if (completedKeys.has(key)) {
-                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
-                        }
-                    });
-                }
-            });
+                        todos.forEach(t => {
+                            const key = t.groupId || t.text;
+                            if (completedKeys.has(key)) {
+                                deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                            }
+                        });
+                    }
+                });
+            }
+        };
+
+        if (clearCompletedBtn) {
+            clearCompletedBtn.addEventListener('click', window.handleClearTodoCompleted);
         }
 
-        window.toggleTodo = function(id) {
+        window.handleToggleTodo = function(id) {
             if (!fbUser) return;
             const t = todos.find(task => task.id === id);
             
@@ -1590,13 +1628,20 @@
             }
         };
 
-        window.deleteTodoGroup = function(groupId, text) {
+        window.handleDeleteTodoGroup = function(groupId, taskId) {
             if(currentUser && currentUser.role === 'lead' && fbUser) {
-                todos.forEach(t => {
-                    if (groupId && t.groupId === groupId) {
-                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
-                    } else if (!groupId && t.text === text) {
-                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                window.handleShowModal("Delete Task", "Are you sure you want to delete this task for all members?", true, (confirmed) => {
+                    if (confirmed) {
+                        const repTask = todos.find(t => t.id === taskId);
+                        const text = repTask ? repTask.text : null;
+                        
+                        todos.forEach(t => {
+                            if (groupId && t.groupId === groupId) {
+                                deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                            } else if (!groupId && text && t.text === text) {
+                                deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                            }
+                        });
                     }
                 });
             }
