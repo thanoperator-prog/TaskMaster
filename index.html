@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Todo App</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        }
+        .checkbox-transition {
+            transition: all 0.2s ease-in-out;
+        }
+        /* Hide scrollbar for cleaner look in the main area */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 h-screen w-full overflow-hidden">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-container" class="h-full w-full flex flex-col items-center justify-center p-4">
+        <div class="mb-8 flex items-center gap-3 text-indigo-600">
+            <i data-lucide="check-square" class="w-10 h-10"></i>
+            <span class="text-3xl font-bold text-slate-800">TaskMaster</span>
+        </div>
+        
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
+            <h2 class="text-xl font-bold mb-6 text-center text-slate-800">Sign in to your account</h2>
+            
+            <!-- Role Toggle -->
+            <div class="flex gap-2 mb-6 p-1 bg-slate-100 rounded-lg">
+                <button id="tab-lead" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-medium text-indigo-600 transition-all" onclick="setLoginTab('lead')">Team Lead</button>
+                <button id="tab-member" class="flex-1 py-2 rounded-md text-slate-500 text-sm font-medium transition-all hover:text-slate-700" onclick="setLoginTab('member')">Team Member</button>
+            </div>
+
+            <!-- Team Lead Form -->
+            <form id="form-lead" onsubmit="handleLeadLogin(event)">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Lead Password</label>
+                <input type="password" id="lead-password" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter password">
+                <p id="lead-error" class="text-red-500 text-xs mb-4 hidden font-medium">Incorrect password. Please try again.</p>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-3 mt-2 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-md">Login as Lead</button>
+            </form>
+
+            <!-- Team Member Form -->
+            <form id="form-member" class="hidden" onsubmit="handleMemberLogin(event)">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Select your profile</label>
+                <select id="member-select" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    <!-- Populated by JS -->
+                </select>
+                <p id="no-members-msg" class="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg mb-4 hidden">No team members available. The Team Lead must create your account first.</p>
+                <button type="submit" id="btn-member-login" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-md">Login as Member</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP CONTAINER ================= -->
+    <div id="app-container" class="hidden h-full w-full flex overflow-hidden">
+        
+        <!-- Desktop Sidebar -->
+        <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full flex-shrink-0">
+            <div class="p-6 flex items-center gap-3 text-indigo-600 border-b border-slate-100">
+                <i data-lucide="check-square" class="w-8 h-8"></i>
+                <span class="text-xl font-bold text-slate-800">TaskMaster</span>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button onclick="switchView('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                </button>
+                <button onclick="switchView('tasks')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-indigo-600 bg-indigo-50" data-view="tasks">
+                    <i data-lucide="list-todo" class="w-5 h-5"></i> Tasks
+                </button>
+                <button id="nav-reports-desktop" onclick="switchView('reports')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hidden" data-view="reports">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Reports
+                </button>
+                <button onclick="switchView('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-indigo-600" data-view="settings">
+                    <i data-lucide="settings" class="w-5 h-5"></i> Settings
+                </button>
+            </nav>
+            
+            <div class="p-6 border-t border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold" id="sidebar-avatar">U</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-700 truncate" id="sidebar-name">User</p>
+                        <p class="text-xs text-slate-500" id="sidebar-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 h-full overflow-y-auto no-scrollbar pb-20 md:pb-0">
+            
+            <!-- Mobile Header -->
+            <header class="md:hidden bg-white px-6 py-4 border-b border-slate-200 sticky top-0 z-10 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2 text-indigo-600">
+                    <i data-lucide="check-square" class="w-6 h-6"></i>
+                    <span class="text-lg font-bold text-slate-800">TaskMaster</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm" id="mobile-avatar">U</div>
+            </header>
+
+            <div class="p-4 sm:p-8 max-w-4xl mx-auto">
+                
+                <!-- ================= VIEW: DASHBOARD ================= -->
+                <div id="view-dashboard" class="hidden space-y-6 animate-fade-in">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800">Welcome back, <span id="dash-name" class="text-indigo-600">User</span>! 👋</h1>
+                        <p class="text-slate-500 mt-2">Here is a summary of your productivity.</p>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                                <i data-lucide="layers" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Total Actions</p>
+                                <p class="text-2xl font-bold text-slate-800" id="stat-total">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Actions Done</p>
+                                <p class="text-2xl font-bold text-slate-800" id="stat-completed">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Pending Actions</p>
+                                <p class="text-2xl font-bold text-slate-800" id="stat-pending">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6">
+                        <h3 class="font-bold text-slate-800 mb-4">Overall Completion Rate</h3>
+                        <div class="w-full bg-slate-100 rounded-full h-4 mb-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-indigo-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-slate-500 text-right" id="progress-text">0% Completed</p>
+                    </div>
+
+                    <!-- Team Live Progress (Leads Only) -->
+                    <div id="lead-team-progress" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6 hidden">
+                        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i data-lucide="activity" class="w-5 h-5 text-indigo-600"></i> Today's Member Progress
+                        </h3>
+                        <div id="team-progress-list" class="space-y-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= VIEW: TASKS ================= -->
+                <div id="view-tasks" class="block animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                            <div>
+                                <h1 class="text-2xl font-bold flex items-center gap-3">
+                                    <i data-lucide="list-todo" class="w-7 h-7"></i> My Tasks
+                                </h1>
+                                <p class="text-indigo-200 text-sm mt-1" id="date-display"></p>
+                            </div>
+                            <span id="rest-day-badge" class="hidden bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">REST DAY</span>
+                        </div>
+
+                        <div class="p-6">
+                            <div id="lead-only-form-container">
+                                <form id="todo-form" class="mb-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i> Create New Task
+                                    </h3>
+                                    <div class="space-y-4">
+                                        <div class="flex flex-col sm:flex-row gap-4">
+                                            <div class="w-full sm:w-1/3">
+                                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
+                                                <select id="todo-category" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner cursor-pointer">
+                                                    <!-- Populated by JS -->
+                                                </select>
+                                            </div>
+                                            <div class="flex-1">
+                                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Task Description <span class="text-red-400">*</span></label>
+                                                <input type="text" id="todo-input" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="What routine needs to be done?" required>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-4 items-end">
+                                            <div class="w-full sm:w-1/3 flex gap-4">
+                                                <div class="w-1/2">
+                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Wait (Mins)</label>
+                                                    <div class="relative">
+                                                        <i data-lucide="clock" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                                        <input type="number" id="todo-repeat-mins" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="Opt" min="1">
+                                                    </div>
+                                                </div>
+                                                <div class="w-1/2">
+                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Repeat</label>
+                                                    <div class="relative">
+                                                        <i data-lucide="repeat" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                                        <input type="number" id="todo-repeat-count" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="Opt" min="1">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="w-full sm:flex-1">
+                                                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center justify-center gap-2 active:scale-95">
+                                                    <i data-lucide="send" class="w-4 h-4 flex-shrink-0"></i>
+                                                    <span>Assign to Team</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div id="todo-list" class="space-y-6"></div>
+                            
+                            <div id="empty-state" class="text-center py-10 hidden">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 mb-4">
+                                    <i data-lucide="check-circle-2" class="w-8 h-8 text-indigo-400"></i>
+                                </div>
+                                <h3 class="text-slate-700 font-medium mb-1">You're all caught up!</h3>
+                                <p class="text-slate-500 text-sm">No pending tasks found.</p>
+                            </div>
+                            
+                            <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-sm">
+                                <span id="task-count" class="text-slate-500 font-medium">0 tasks remaining</span>
+                                <button id="clear-completed" class="text-slate-400 hover:text-red-500 transition-colors hidden font-medium">
+                                    Clear completed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= VIEW: REPORTS ================= -->
+                <div id="view-reports" class="hidden animate-fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h1 class="text-3xl font-bold text-slate-800">Daily Reports</h1>
+                        <button onclick="archiveDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                            <i data-lucide="archive" class="w-4 h-4"></i> End Day & Record
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6">
+                            <p class="text-slate-500 text-sm mb-6">Archive the current tasks to save a snapshot of who completed their routines today. Doing so will record the statistics and clear the active tasks for tomorrow.</p>
+                            
+                            <div id="reports-list" class="space-y-6">
+                                <!-- Populated by JS -->
+                            </div>
+                            
+                            <div id="reports-empty-state" class="text-center py-10 hidden">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
+                                    <i data-lucide="file-bar-chart" class="w-8 h-8 text-slate-400"></i>
+                                </div>
+                                <h3 class="text-slate-700 font-medium mb-1">No reports recorded yet!</h3>
+                                <p class="text-slate-500 text-sm">Click "End Day & Record" to save your first daily snapshot.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= VIEW: SETTINGS ================= -->
+                <div id="view-settings" class="hidden max-w-2xl animate-fade-in">
+                    <h1 class="text-3xl font-bold text-slate-800 mb-6">Settings & Team</h1>
+                    
+                    <!-- Profile & Logout Section -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800 mb-1">My Profile</h2>
+                                <p class="text-sm text-slate-500">Manage your session.</p>
+                            </div>
+                            <span id="role-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"></span>
+                        </div>
+                        <div class="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-2xl shadow-sm" id="profile-avatar">U</div>
+                                <div>
+                                    <p class="font-bold text-slate-800 text-lg" id="profile-name">User</p>
+                                    <p class="text-sm text-slate-500" id="profile-role">Role</p>
+                                </div>
+                            </div>
+                            <button onclick="logout()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium flex items-center justify-center gap-2 shadow-sm">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Automation Settings (Leads Only) -->
+                    <div id="automation-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                    <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i> Auto Record & Clear
+                                </h2>
+                                <p class="text-sm text-slate-500">Automatically end the day and record progress at 8:00 AM (PHT).</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="auto-record-toggle" class="sr-only peer" onchange="toggleAutoRecord(event)">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Team Management (Leads Only) -->
+                    <div id="team-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
+                        <div class="p-6 border-b border-slate-100">
+                            <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Team Management
+                            </h2>
+                            <p class="text-sm text-slate-500">Add new members and set their rest days (Leads only).</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <form onsubmit="addTeamMember(event)" class="flex flex-col gap-3">
+                                <div class="flex gap-3">
+                                    <input type="text" id="new-member-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50" placeholder="New member's full name" required>
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                                        <i data-lucide="user-plus" class="w-4 h-4"></i> Add
+                                    </button>
+                                </div>
+                                <div class="text-xs text-slate-500 font-medium mt-1">Select Rest Days (Optional):</div>
+                                <div class="flex flex-wrap gap-3 mt-1">
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Monday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Mon</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Tuesday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Tue</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Wednesday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Wed</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Thursday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Thu</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Friday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Fri</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Saturday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Sat</label>
+                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Sunday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Sun</label>
+                                </div>
+                            </form>
+                            <div class="mt-4 border border-slate-100 rounded-xl overflow-hidden">
+                                <ul id="team-list" class="divide-y divide-slate-100"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Management (Leads Only) -->
+                    <div id="category-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
+                        <div class="p-6 border-b border-slate-100">
+                            <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="tags" class="w-5 h-5 text-indigo-600"></i> Category Management
+                            </h2>
+                            <p class="text-sm text-slate-500">Create predefined categories for grouping tasks.</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <form onsubmit="addCategory(event)" class="flex gap-3">
+                                <input type="text" id="new-category-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50" placeholder="New category name (e.g. Morning Shift)" required>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Add
+                                </button>
+                            </form>
+                            <div class="mt-4 border border-slate-100 rounded-xl overflow-hidden">
+                                <ul id="category-list" class="divide-y divide-slate-100"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone (Leads Only) -->
+                    <div id="danger-zone-section" class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden hidden">
+                        <div class="p-6">
+                            <h2 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i> Danger Zone
+                            </h2>
+                            <p class="text-sm text-red-600 mb-4">This action cannot be undone. It will permanently delete all tasks.</p>
+                            <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="trash" class="w-4 h-4"></i> Delete All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around pb-safe pt-2 px-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <button onclick="switchView('dashboard')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="dashboard">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Dashboard</span>
+            </button>
+            <button onclick="switchView('tasks')" class="nav-item-mobile flex flex-col items-center p-2 text-indigo-600 transition-colors" data-view="tasks">
+                <i data-lucide="list-todo" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Tasks</span>
+            </button>
+            <button id="nav-reports-mobile" onclick="switchView('reports')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors hidden" data-view="reports">
+                <i data-lucide="bar-chart-3" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Reports</span>
+            </button>
+            <button onclick="switchView('settings')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="settings">
+                <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ================= CUSTOM MODAL ================= -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl transform scale-95 transition-transform duration-200" id="custom-modal-content">
+            <h3 id="modal-title" class="text-lg font-bold text-slate-800 mb-2">Message</h3>
+            <p id="modal-message" class="text-slate-600 mb-6 text-sm">...</p>
+            <div class="flex gap-3 justify-end">
+                <button id="modal-btn-cancel" class="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 hidden transition-colors">Cancel</button>
+                <button id="modal-btn-confirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EDIT FORM MODAL ================= -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl transform scale-95 transition-transform duration-200" id="edit-modal-content">
+            <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Edit</h3>
+            <form id="edit-modal-form" onsubmit="handleEditFormSubmit(event)">
+                <div id="edit-modal-body" class="space-y-4">
+                    <!-- Injected Dynamically -->
+                </div>
+                <div class="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Initialization ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHxm-HBYtgujRLiGkuYyo8Ho7tTQGqj-E",
+            authDomain: "taskmaster-13e85.firebaseapp.com",
+            projectId: "taskmaster-13e85",
+            storageBucket: "taskmaster-13e85.firebasestorage.app",
+            messagingSenderId: "667442482596",
+            appId: "1:667442482596:web:5669abcafe6fa67f1ec531",
+            measurementId: "G-8TZDEW287Z"
+        };
+        const appId = 'taskmaster-app';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let fbUser = null;
+
+        // --- Custom Modal Logic ---
+        let modalCallback = null;
+        const modalContainer = document.getElementById('custom-modal');
+        const modalContent = document.getElementById('custom-modal-content');
+
+        window.showModal = function(title, message, isConfirm, callback) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            
+            if (isConfirm) {
+                btnCancel.classList.remove('hidden');
+                btnConfirm.textContent = 'Confirm';
+                btnConfirm.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors';
+            } else {
+                btnCancel.classList.add('hidden');
+                btnConfirm.textContent = 'OK';
+                btnConfirm.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors';
+            }
+            
+            modalCallback = callback;
+            
+            modalContainer.classList.remove('hidden');
+            void modalContainer.offsetWidth; // Trigger reflow
+            modalContainer.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+        }
+
+        window.closeModal = function(result) {
+            modalContainer.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modalContainer.classList.add('hidden');
+                if (modalCallback) modalCallback(result);
+                modalCallback = null;
+            }, 200);
+        }
+
+        document.getElementById('modal-btn-cancel').addEventListener('click', () => window.closeModal(false));
+        document.getElementById('modal-btn-confirm').addEventListener('click', () => window.closeModal(true));
+
+        // --- Edit Form Modal Logic ---
+        let currentEditContext = null;
+        const editModalContainer = document.getElementById('edit-modal');
+        const editModalContent = document.getElementById('edit-modal-content');
+
+        window.openEditModal = function(title, htmlContent, context) {
+            document.getElementById('edit-modal-title').textContent = title;
+            document.getElementById('edit-modal-body').innerHTML = htmlContent;
+            currentEditContext = context;
+
+            editModalContainer.classList.remove('hidden');
+            void editModalContainer.offsetWidth;
+            editModalContainer.classList.remove('opacity-0');
+            editModalContent.classList.remove('scale-95');
+        }
+
+        window.closeEditModal = function() {
+            editModalContainer.classList.add('opacity-0');
+            editModalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                editModalContainer.classList.add('hidden');
+                currentEditContext = null;
+            }, 200);
+        }
+
+        window.handleEditFormSubmit = function(e) {
+            e.preventDefault();
+            
+            if (!currentEditContext || !fbUser || currentUser.role !== 'lead') return;
+
+            if (currentEditContext.type === 'category') {
+                const newName = document.getElementById('edit-cat-input').value.trim();
+                const { index, oldName } = currentEditContext;
+                
+                if (newName && newName !== oldName) {
+                    if (taskCategories.includes(newName)) {
+                        window.showModal("Duplicate", "This category already exists.", false);
+                        return;
+                    }
+                    const updatedCats = [...taskCategories];
+                    updatedCats[index] = newName;
+                    
+                    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
+                        .then(() => {
+                            const tasksToUpdate = todos.filter(t => t.category === oldName);
+                            tasksToUpdate.forEach(t => {
+                                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id), { category: newName }).catch(console.error);
+                            });
+                        }).catch(console.error);
+                }
+            } 
+            else if (currentEditContext.type === 'member') {
+                const newName = document.getElementById('edit-mem-name').value.trim();
+                const checks = document.querySelectorAll('.edit-member-rest-day:checked');
+                const restDays = Array.from(checks).map(c => c.value);
+                
+                if (newName) {
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', currentEditContext.memberId), {
+                        name: newName,
+                        restDays: restDays
+                    }).catch(console.error);
+                }
+            }
+            else if (currentEditContext.type === 'task') {
+                const newText = document.getElementById('edit-task-text').value.trim();
+                const newCat = document.getElementById('edit-task-category').value;
+                const newMins = parseInt(document.getElementById('edit-task-mins').value) || 0;
+                const newCount = parseInt(document.getElementById('edit-task-count').value) || null;
+
+                const resetInterval = newMins > 0 ? newMins * 60000 : null;
+
+                if (newCount > 0 && !resetInterval) {
+                    window.showModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
+                    return; 
+                }
+
+                if (newText) {
+                    const tasksToUpdate = todos.filter(t => (currentEditContext.groupId && t.groupId === currentEditContext.groupId) || (!currentEditContext.groupId && t.text === currentEditContext.text));
+                    
+                    tasksToUpdate.forEach(t => {
+                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id), {
+                            text: newText,
+                            category: newCat,
+                            resetInterval: resetInterval,
+                            maxCompletions: newCount
+                        }).catch(console.error);
+                    });
+                }
+            }
+            window.closeEditModal();
+        }
+
+
+        // --- PHT Time Helper Functions ---
+        function getPHTDateObj() {
+            const str = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
+            return new Date(str);
+        }
+        function getPHTDateString() {
+            const d = getPHTDateObj();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        function getCurrentDayName() {
+            return getPHTDateObj().toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Manila' });
+        }
+
+        // --- Initialization ---
+        lucide.createIcons();
+        const dateDisplay = document.getElementById('date-display');
+        
+        function updateHeaderDate() {
+            if (dateDisplay) {
+                dateDisplay.textContent = getPHTDateObj().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'Asia/Manila' });
+            }
+        }
+        updateHeaderDate();
+
+        // --- Data & State ---
+        let todos = [];
+        let team = [];
+        let currentUser = null;
+        let historyReports = [];
+        let taskCategories = [];
+        let teamConfig = { autoRecordEnabled: false, lastAutoRecordDate: '' };
+
+        // --- Helper Functions ---
+        function generateId() { return Math.random().toString(36).substring(2, 9); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        // --- Auth & Realtime Setup ---
+        const initAuth = async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                window.showModal("Configuration Needed", "Paki-enable ang 'Anonymous' sign-in sa iyong Firebase Console -> Authentication.", false);
+            }
+        };
+
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            fbUser = user;
+            if (user) {
+                setupFirestoreListeners();
+            }
+        });
+
+        function setupFirestoreListeners() {
+            if (!fbUser) return;
+            const baseColPath = ['artifacts', appId, 'public', 'data'];
+
+            // Listen to Team Members
+            onSnapshot(collection(db, ...baseColPath, 'team_members'), (snap) => {
+                if (snap.empty) {
+                    const lead = { id: 'u1', name: 'Manager (Lead)', role: 'lead', restDays: [] };
+                    setDoc(doc(db, ...baseColPath, 'team_members', lead.id), lead).catch(console.error);
+                } else {
+                    team = snap.docs.map(d => d.data());
+                }
+                populateMemberDropdown();
+                
+                // Verify session
+                const savedUserId = localStorage.getItem('todo_logged_in_user');
+                if (savedUserId && team.find(t => t.id === savedUserId)) {
+                    currentUser = team.find(t => t.id === savedUserId);
+                    updateUserData();
+                    renderSettings();
+                } else if (!currentUser && savedUserId) {
+                    window.logout();
+                }
+            }, console.error);
+
+            // Listen to Categories Config & Settings
+            onSnapshot(doc(db, ...baseColPath, 'team_config', 'settings'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    taskCategories = data.categories || ['General', 'Morning Routine', 'Closing'];
+                    teamConfig.autoRecordEnabled = data.autoRecordEnabled || false;
+                    teamConfig.lastAutoRecordDate = data.lastAutoRecordDate || '';
+
+                    const toggle = document.getElementById('auto-record-toggle');
+                    if (toggle) toggle.checked = teamConfig.autoRecordEnabled;
+                } else {
+                    taskCategories = ['General', 'Morning Routine', 'Closing'];
+                    teamConfig = { autoRecordEnabled: false, lastAutoRecordDate: '' };
+                    setDoc(doc(db, ...baseColPath, 'team_config', 'settings'), { categories: taskCategories, autoRecordEnabled: false, lastAutoRecordDate: '' }, { merge: true }).catch(console.error);
+                }
+                renderSettings();
+                renderCategoryDropdown();
+                renderTasks();
+                checkAutoRecord();
+            }, console.error);
+
+            // Listen to Tasks
+            onSnapshot(collection(db, ...baseColPath, 'team_tasks'), (snap) => {
+                todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                todos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); 
+                renderTasks();
+                if (!document.getElementById('view-dashboard').classList.contains('hidden')) renderDashboard();
+            }, console.error);
+
+            // Listen to Reports
+            onSnapshot(collection(db, ...baseColPath, 'team_reports'), (snap) => {
+                historyReports = snap.docs.map(d => d.data());
+                historyReports.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                renderReports();
+            }, console.error);
+        }
+
+        // --- Auto Record Logic ---
+        function checkAutoRecord() {
+            if (!currentUser || currentUser.role !== 'lead' || !teamConfig.autoRecordEnabled) return;
+            
+            const phtDate = getPHTDateObj();
+            const todayStr = getPHTDateString();
+            
+            if (phtDate.getHours() >= 8 && teamConfig.lastAutoRecordDate !== todayStr) {
+                teamConfig.lastAutoRecordDate = todayStr;
+                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), {
+                    lastAutoRecordDate: todayStr
+                }).then(() => {
+                    window.performArchiveDay(true);
+                }).catch(console.error);
+            }
+        }
+
+        window.toggleAutoRecord = function(e) {
+            if (!fbUser || !currentUser || currentUser.role !== 'lead') return;
+            const isEnabled = e.target.checked;
+            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { autoRecordEnabled: isEnabled }, { merge: true })
+                .catch(console.error);
+        };
+
+        // --- Login Logic ---
+        window.setLoginTab = function(tab) {
+            const btnLead = document.getElementById('tab-lead');
+            const btnMember = document.getElementById('tab-member');
+            const formLead = document.getElementById('form-lead');
+            const formMember = document.getElementById('form-member');
+            const errorMsg = document.getElementById('lead-error');
+
+            errorMsg.classList.add('hidden');
+
+            if(tab === 'lead') {
+                btnLead.className = "flex-1 py-2 rounded-md bg-white shadow text-sm font-medium text-indigo-600 transition-all";
+                btnMember.className = "flex-1 py-2 rounded-md text-slate-500 text-sm font-medium transition-all hover:text-slate-700";
+                formLead.classList.remove('hidden');
+                formMember.classList.add('hidden');
+            } else {
+                btnMember.className = "flex-1 py-2 rounded-md bg-white shadow text-sm font-medium text-indigo-600 transition-all";
+                btnLead.className = "flex-1 py-2 rounded-md text-slate-500 text-sm font-medium transition-all hover:text-slate-700";
+                formMember.classList.remove('hidden');
+                formLead.classList.add('hidden');
+                populateMemberDropdown();
+            }
+        };
+
+        function populateMemberDropdown() {
+            const select = document.getElementById('member-select');
+            const members = team.filter(t => t.role === 'member');
+            const msg = document.getElementById('no-members-msg');
+            const btn = document.getElementById('btn-member-login');
+
+            if (members.length === 0) {
+                if(select) select.classList.add('hidden');
+                if(btn) btn.classList.add('hidden');
+                if(msg) msg.classList.remove('hidden');
+            } else {
+                if(select) select.classList.remove('hidden');
+                if(btn) btn.classList.remove('hidden');
+                if(msg) msg.classList.add('hidden');
+                if(select) select.innerHTML = members.map(m => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+            }
+        }
+
+        window.handleLeadLogin = function(e) {
+            e.preventDefault();
+            const pass = document.getElementById('lead-password').value;
+            document.getElementById('lead-password').value = '';
+            performLogin('u1'); // u1 is always the lead
+        };
+
+        window.handleMemberLogin = function(e) {
+            e.preventDefault();
+            const selectedId = document.getElementById('member-select').value;
+            if (selectedId) performLogin(selectedId);
+        };
+
+        function performLogin(userId) {
+            currentUser = team.find(t => t.id === userId);
+            if (!currentUser) return;
+
+            localStorage.setItem('todo_logged_in_user', userId);
+            
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('flex');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('flex');
+
+            updateUserData();
+            renderCategoryDropdown();
+            renderTasks();
+            window.switchView('tasks');
+        }
+
+        window.logout = function() {
+            currentUser = null;
+            localStorage.removeItem('todo_logged_in_user');
+            
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('flex');
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('login-container').classList.add('flex');
+            
+            window.setLoginTab('lead');
+        };
+
+        // --- View Navigation ---
+        window.switchView = function(viewName) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-tasks').classList.add('hidden');
+            document.getElementById('view-settings').classList.add('hidden');
+            const viewReports = document.getElementById('view-reports');
+            if(viewReports) viewReports.classList.add('hidden');
+            
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                if(btn.dataset.view === viewName) {
+                    btn.classList.replace('text-slate-600', 'text-indigo-600');
+                    btn.classList.replace('hover:bg-slate-50', 'bg-indigo-50');
+                } else {
+                    btn.classList.replace('text-indigo-600', 'text-slate-600');
+                    btn.classList.replace('bg-indigo-50', 'hover:bg-slate-50');
+                }
+            });
+
+            document.querySelectorAll('.nav-item-mobile').forEach(btn => {
+                if(btn.dataset.view === viewName) {
+                    btn.classList.replace('text-slate-500', 'text-indigo-600');
+                } else {
+                    btn.classList.replace('text-indigo-600', 'text-slate-500');
+                }
+            });
+
+            if(viewName === 'dashboard') renderDashboard();
+            if(viewName === 'settings') renderSettings();
+            if(viewName === 'reports') renderReports();
+            
+            updateHeaderDate();
+        };
+
+        // --- Settings & UI Logic ---
+        function updateUserData() {
+            if(!currentUser) return;
+
+            const name = escapeHtml(currentUser.name);
+            const initial = name.charAt(0).toUpperCase();
+            const roleStr = currentUser.role === 'lead' ? 'Team Lead' : 'Team Member';
+            
+            document.getElementById('sidebar-name').textContent = name;
+            document.getElementById('dash-name').textContent = name;
+            document.getElementById('sidebar-role').textContent = roleStr;
+            document.getElementById('sidebar-avatar').textContent = initial;
+            document.getElementById('mobile-avatar').textContent = initial;
+            
+            document.getElementById('profile-name').textContent = name;
+            document.getElementById('profile-role').textContent = roleStr;
+            document.getElementById('profile-avatar').textContent = initial;
+            
+            document.getElementById('lead-only-form-container').style.display = currentUser.role === 'lead' ? 'block' : 'none';
+            document.getElementById('team-management-section').style.display = currentUser.role === 'lead' ? 'block' : 'none';
+            document.getElementById('category-management-section').style.display = currentUser.role === 'lead' ? 'block' : 'none';
+            document.getElementById('danger-zone-section').style.display = currentUser.role === 'lead' ? 'block' : 'none';
+            document.getElementById('automation-management-section').style.display = currentUser.role === 'lead' ? 'block' : 'none';
+            
+            const navRepDesk = document.getElementById('nav-reports-desktop');
+            const navRepMob = document.getElementById('nav-reports-mobile');
+            if (navRepDesk) navRepDesk.style.display = currentUser.role === 'lead' ? 'flex' : 'none';
+            if (navRepMob) navRepMob.style.display = currentUser.role === 'lead' ? 'flex' : 'none';
+            
+            const badge = document.getElementById('role-badge');
+            badge.textContent = roleStr;
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${currentUser.role === 'lead' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`;
+            
+            const currentDayName = getCurrentDayName();
+            const restDayBadge = document.getElementById('rest-day-badge');
+            if (currentUser.role === 'member' && currentUser.restDays && currentUser.restDays.includes(currentDayName)) {
+                restDayBadge.classList.remove('hidden');
+            } else {
+                restDayBadge.classList.add('hidden');
+            }
+        }
+
+        function renderSettings() {
+            const teamList = document.getElementById('team-list');
+            if (teamList) {
+                if (team.length === 1) { 
+                    teamList.innerHTML = `<li class="p-4 text-sm text-slate-500 text-center bg-white">No members added yet.</li>`;
+                } else {
+                    teamList.innerHTML = team.map(t => {
+                        const restBadge = t.restDays && t.restDays.length > 0 
+                            ? `<div class="text-[10px] text-slate-500 font-medium mt-1 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded inline-block border border-slate-200">Rest: ${t.restDays.join(', ')}</div>` 
+                            : '';
+                        
+                        const actionsHtml = t.role !== 'lead' ? `
+                            <div class="flex items-center gap-1">
+                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-indigo-50 transition-colors" title="Edit Member"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteMember('${t.id}')" class="text-slate-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors" title="Delete Member"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        ` : `
+                            <div class="flex items-center gap-1">
+                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-indigo-50 transition-colors" title="Edit Name"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        `;
+
+                        return `
+                        <li class="flex justify-between items-center p-4 bg-white hover:bg-slate-50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full ${t.role === 'lead' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-600'} flex items-center justify-center font-bold text-xs">${t.name.charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <span class="font-bold text-sm text-slate-700 block">${escapeHtml(t.name)}</span>
+                                    ${restBadge}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md ${t.role === 'lead' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}">${t.role}</span>
+                                ${actionsHtml}
+                            </div>
+                        </li>
+                    `}).join('');
+                }
+            }
+
+            const categoryList = document.getElementById('category-list');
+            if (categoryList) {
+                if (taskCategories.length === 0) {
+                    categoryList.innerHTML = `<li class="p-4 text-sm text-slate-500 text-center bg-white">No categories added yet.</li>`;
+                } else {
+                    categoryList.innerHTML = taskCategories.map((c, index) => {
+                        const upDisabled = index === 0 ? 'opacity-30 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50';
+                        const downDisabled = index === taskCategories.length - 1 ? 'opacity-30 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50';
+                        return `
+                        <li class="flex justify-between items-center p-4 bg-white hover:bg-slate-50 transition-colors">
+                            <span class="font-medium text-slate-700 flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4 text-slate-400"></i> ${escapeHtml(c)}</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="moveCategory(${index}, -1)" class="transition-colors p-2 rounded-lg focus:outline-none ${upDisabled}" ${index === 0 ? 'disabled' : ''} title="Move Up">
+                                    <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="moveCategory(${index}, 1)" class="transition-colors p-2 rounded-lg focus:outline-none ${downDisabled}" ${index === taskCategories.length - 1 ? 'disabled' : ''} title="Move Down">
+                                    <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="editCategory(${index}, '${escapeHtml(c)}')" class="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-indigo-50 focus:outline-none ml-2" title="Edit">
+                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteCategory(${index})" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="Delete">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `}).join('');
+                }
+                lucide.createIcons();
+            }
+        }
+
+        function renderCategoryDropdown() {
+            const select = document.getElementById('todo-category');
+            if (select) {
+                select.innerHTML = taskCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            }
+        }
+
+        // --- Edit Form Triggers ---
+        window.editCategory = function(index, oldName) {
+            if (currentUser.role !== 'lead' || !fbUser) return;
+            const html = `
+                <label class="block text-sm font-medium text-slate-700 mb-1">Category Name</label>
+                <input type="text" id="edit-cat-input" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${oldName}" required>
+            `;
+            window.openEditModal('Edit Category', html, { type: 'category', index, oldName });
+        };
+
+        window.editMember = function(memberId) {
+            if (currentUser.role !== 'lead' || !fbUser) return;
+            const member = team.find(t => t.id === memberId);
+            if (!member) return;
+            
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const restDays = member.restDays || [];
+            
+            const checksHtml = member.role !== 'lead' ? `
+                <div class="text-sm font-medium text-slate-700 mb-2">Rest Days</div>
+                <div class="flex flex-wrap gap-3">
+                    ${days.map(d => `
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer">
+                            <input type="checkbox" value="${d}" class="edit-member-rest-day w-4 h-4 text-indigo-600 rounded" ${restDays.includes(d) ? 'checked' : ''}> ${d.substring(0,3)}
+                        </label>
+                    `).join('')}
+                </div>
+            ` : `<p class="text-xs text-slate-400 italic">Leads do not have assigned rest days in the system.</p>`;
+
+            const html = `
+                <label class="block text-sm font-medium text-slate-700 mb-1">Member Name</label>
+                <input type="text" id="edit-mem-name" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4" value="${escapeHtml(member.name)}" required>
+                ${checksHtml}
+            `;
+            window.openEditModal('Edit Profile', html, { type: 'member', memberId });
+        };
+
+        window.deleteMember = function(memberId) {
+            if (currentUser.role !== 'lead' || !fbUser) return;
+            window.showModal("Delete Member", "Are you sure? This will permanently remove the member from your team.", true, (confirmed) => {
+                if (confirmed) {
+                    deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', memberId)).catch(console.error);
+                }
+            });
+        };
+
+        window.editTodoGroup = function(groupId, text) {
+            if (currentUser.role !== 'lead' || !fbUser) return;
+            
+            const representative = todos.find(t => (groupId && t.groupId === groupId) || (!groupId && t.text === text));
+            if (!representative) return;
+
+            const catOptions = taskCategories.map(c => 
+                `<option value="${escapeHtml(c)}" ${c === representative.category ? 'selected' : ''}>${escapeHtml(c)}</option>`
+            ).join('');
+
+            const mins = representative.resetInterval ? representative.resetInterval / 60000 : '';
+            const count = representative.maxCompletions || '';
+
+            const html = `
+                <label class="block text-sm font-medium text-slate-700 mb-1">Task Description</label>
+                <input type="text" id="edit-task-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4" value="${escapeHtml(representative.text)}" required>
+                
+                <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                <select id="edit-task-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4">
+                    ${catOptions}
+                </select>
+
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Wait (Mins)</label>
+                        <input type="number" id="edit-task-mins" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${mins}" min="1" placeholder="Opt">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Repeat (Times)</label>
+                        <input type="number" id="edit-task-count" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${count}" min="1" placeholder="Opt">
+                    </div>
+                </div>
+            `;
+
+            window.openEditModal('Edit Task Assignment', html, { type: 'task', groupId, text });
+        };
+
+        // --- Management Operations ---
+        window.addCategory = function(e) {
+            e.preventDefault();
+            if (!fbUser || !currentUser) return;
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim();
+            if (name && currentUser.role === 'lead' && !taskCategories.includes(name)) {
+                const updatedCats = [...taskCategories, name];
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
+                    .catch(console.error);
+                input.value = '';
+            } else if (taskCategories.includes(name)) {
+                window.showModal("Duplicate", "This category already exists.", false);
+            }
+        };
+
+        window.addTeamMember = function(e) {
+            e.preventDefault();
+            if (!fbUser || !currentUser) return;
+            const input = document.getElementById('new-member-name');
+            const name = input.value.trim();
+            
+            const restDayCbs = document.querySelectorAll('.member-rest-day:checked');
+            const restDays = Array.from(restDayCbs).map(cb => cb.value);
+
+            if(name && currentUser.role === 'lead') {
+                const newId = 'u' + Date.now();
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', newId), {
+                    id: newId,
+                    name: name,
+                    role: 'member',
+                    restDays: restDays
+                }).catch(console.error);
+                input.value = '';
+                restDayCbs.forEach(cb => cb.checked = false); // clear checks
+            }
+        };
+
+        window.clearAllData = function() {
+            if (!fbUser || !currentUser) return;
+            window.showModal("Delete All Tasks", "Are you sure? This will permanently delete all tasks for the ENTIRE team.", true, (confirmed) => {
+                if(confirmed) {
+                    todos.forEach(t => {
+                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                    });
+                    window.switchView('tasks');
+                }
+            });
+        };
+
+        // --- Dashboard Logic ---
+        function renderDashboard() {
+            if(!currentUser) return;
+            const visibleTasks = currentUser.role === 'lead' ? todos : todos.filter(t => t.assigneeId === currentUser.id);
+            
+            const total = visibleTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
+            const completed = visibleTasks.reduce((sum, t) => {
+                if (t.maxCompletions) return sum + Math.min(t.currentCompletions || 0, t.maxCompletions);
+                return sum + (t.completed ? 1 : 0);
+            }, 0);
+            
+            const pending = total - completed;
+            const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${percentage}% Completed`;
+
+            const leadTeamProgress = document.getElementById('lead-team-progress');
+            const teamProgressList = document.getElementById('team-progress-list');
+            
+            if (currentUser.role === 'lead' && leadTeamProgress && teamProgressList) {
+                leadTeamProgress.classList.remove('hidden');
+                const members = team.filter(t => t.role === 'member');
+                
+                if (members.length === 0) {
+                    teamProgressList.innerHTML = `<p class="text-sm text-slate-500">No members to track.</p>`;
+                } else {
+                    teamProgressList.innerHTML = members.map(m => {
+                        const mTasks = todos.filter(t => t.assigneeId === m.id);
+                        const mTotal = mTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
+                        const mComp = mTasks.reduce((sum, t) => {
+                            if (t.maxCompletions) return sum + Math.min(t.currentCompletions || 0, t.maxCompletions);
+                            return sum + (t.completed ? 1 : 0);
+                        }, 0);
+                        const mPerc = mTotal === 0 ? 0 : Math.round((mComp / mTotal) * 100);
+                        
+                        return `
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-slate-700 w-1/4 truncate">${escapeHtml(m.name)}</span>
+                            <div class="flex-1 mx-4 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div class="${mPerc === 100 && mTotal > 0 ? 'bg-emerald-500' : 'bg-indigo-400'} h-2 rounded-full transition-all" style="width: ${mPerc}%"></div>
+                            </div>
+                            <span class="text-xs font-bold w-12 text-right ${mPerc === 100 && mTotal > 0 ? 'text-emerald-600' : 'text-slate-500'}">${mComp}/${mTotal}</span>
+                        </div>`;
+                    }).join('');
+                }
+            } else if (leadTeamProgress) {
+                leadTeamProgress.classList.add('hidden');
+            }
+        }
+
+        // --- Reports Logic ---
+        function renderReports() {
+            if (!currentUser || currentUser.role !== 'lead') return;
+            
+            const listEl = document.getElementById('reports-list');
+            const emptyEl = document.getElementById('reports-empty-state');
+            
+            if (historyReports.length === 0) {
+                listEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+            } else {
+                emptyEl.classList.add('hidden');
+                listEl.classList.remove('hidden');
+                
+                listEl.innerHTML = historyReports.slice().reverse().map(report => `
+                    <div class="border border-slate-200 rounded-xl p-4 sm:p-5 bg-slate-50">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> ${escapeHtml(report.date)}
+                            </h4>
+                            <span class="text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200">Total Actions: ${report.totalTasks}</span>
+                        </div>
+                        <div class="space-y-3">
+                            ${(report.memberStats || []).map(m => `
+                                <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                                    <span class="text-sm font-medium text-slate-700 flex-1 truncate">${escapeHtml(m.name)}</span>
+                                    <span class="text-xs font-bold px-2 py-1 rounded-md ${m.completed === m.total && m.total > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                        ${m.completed} / ${m.total} Done
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        window.performArchiveDay = function(isSilent = false) {
+            if (!currentUser || currentUser.role !== 'lead' || !fbUser) return;
+            if (todos.length === 0) {
+                if (!isSilent) window.showModal("Nothing to Record", "There are no active tasks to record today.", false);
+                return;
+            }
+            
+            const executeArchive = () => {
+                const members = team.filter(t => t.role === 'member');
+                const memberStats = members.map(m => {
+                    const mTasks = todos.filter(t => t.assigneeId === m.id);
+                    const totalActions = mTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
+                    const completedActions = mTasks.reduce((sum, t) => {
+                        if (t.maxCompletions) return sum + Math.min(t.currentCompletions || 0, t.maxCompletions);
+                        return sum + (t.completed ? 1 : 0);
+                    }, 0);
+
+                    return { name: m.name, total: totalActions, completed: completedActions };
+                });
+                
+                const reportDate = getPHTDateObj().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' });
+                
+                const report = {
+                    id: 'r' + Date.now(),
+                    date: reportDate,
+                    totalTasks: todos.reduce((sum, t) => sum + (t.maxCompletions || 1), 0),
+                    memberStats: memberStats,
+                    createdAt: Date.now()
+                };
+                
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_reports', report.id), report).catch(console.error);
+                
+                // Clear current tasks in Firestore
+                todos.forEach(t => {
+                    deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                });
+                
+                if (!isSilent) window.showModal("Success", "Progress recorded successfully! Tasks have been cleared for tomorrow.", false);
+            };
+
+            if (isSilent) {
+                executeArchive();
+            } else {
+                window.showModal("End Day & Record", "Are you sure you want to record today's progress and clear all active tasks for tomorrow?", true, (confirmed) => {
+                    if (confirmed) executeArchive();
+                });
+            }
+        };
+
+        window.archiveDay = function() {
+            window.performArchiveDay(false);
+        };
+
+        // --- Tasks Logic (Core App) ---
+        const list = document.getElementById('todo-list');
+        const emptyState = document.getElementById('empty-state');
+        const taskCount = document.getElementById('task-count');
+        const clearCompletedBtn = document.getElementById('clear-completed');
+        const todoForm = document.getElementById('todo-form');
+
+        function renderTasks() {
+            if(!currentUser || !list) return;
+            list.innerHTML = '';
+            
+            let displayItems = [];
+            const currentDayName = getCurrentDayName();
+            
+            if (currentUser.role === 'lead') {
+                const groupedMap = new Map();
+                todos.forEach(t => {
+                    const key = t.groupId || t.text;
+                    if (!groupedMap.has(key)) {
+                        groupedMap.set(key, { 
+                            isGroup: true, key: key, text: t.text, category: t.category || 'General',
+                            total: 0, completed: 0, groupId: t.groupId, isRepetitive: !!t.resetInterval,
+                            resetInterval: t.resetInterval, maxCompletions: t.maxCompletions
+                        });
+                        displayItems.push(groupedMap.get(key));
+                    }
+                    const group = groupedMap.get(key);
+                    group.total += 1;
+                    const isFullyDone = t.completed && (!t.maxCompletions || (t.currentCompletions || 0) >= t.maxCompletions);
+                    if (isFullyDone) group.completed += 1;
+                });
+            } else {
+                displayItems = todos.filter(t => t.assigneeId === currentUser.id);
+            }
+            
+            if (displayItems.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                if (list) list.classList.add('hidden');
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+                if (list) list.classList.remove('hidden');
+                
+                const categories = {};
+                displayItems.forEach(item => {
+                    const cat = item.category || 'General';
+                    if (!categories[cat]) categories[cat] = [];
+                    categories[cat].push(item);
+                });
+
+                const orderedCats = [...taskCategories];
+                for (const cat in categories) {
+                    if (!orderedCats.includes(cat)) orderedCats.push(cat);
+                }
+
+                orderedCats.forEach(cat => {
+                    if (!categories[cat]) return;
+
+                    const catDiv = document.createElement('div');
+                    catDiv.className = 'mb-8 last:mb-0';
+                    catDiv.innerHTML = `
+                        <div class="flex items-center justify-between mb-4 px-1">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg"><i data-lucide="folder" class="w-4 h-4"></i></span>
+                                ${escapeHtml(cat)}
+                            </h3>
+                            <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">${categories[cat].length} Task${categories[cat].length > 1 ? 's' : ''}</span>
+                        </div>
+                    `;
+                    
+                    const ul = document.createElement('ul');
+                    ul.className = 'space-y-3';
+
+                    categories[cat].forEach(item => {
+                        const li = document.createElement('li');
+                        
+                        let timerHtml = '';
+                        if (item.resetInterval) {
+                            const mins = Math.floor(item.resetInterval / 60000);
+                            if (currentUser.role !== 'lead' && item.nextReset && item.completed) {
+                                const cyclesHtml = item.maxCompletions ? `<span class="ml-1 text-amber-700/70">(${item.currentCompletions || 0}/${item.maxCompletions})</span>` : '';
+                                timerHtml = `
+                                    <div class="ml-2 flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 flex-shrink-0">
+                                        <i data-lucide="timer" class="w-3 h-3"></i>
+                                        <span class="countdown-timer-text" data-time="${item.nextReset}">--:--</span>
+                                        ${cyclesHtml}
+                                    </div>
+                                `;
+                            } else {
+                                const cycleHtml = item.maxCompletions ? (currentUser.role === 'lead' ? `<span class="ml-1">(${item.maxCompletions}x)</span>` : `<span class="ml-1">(${item.currentCompletions || 0}/${item.maxCompletions})</span>`) : '';
+                                timerHtml = `
+                                    <div class="ml-2 flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 flex-shrink-0" title="Repeats ${mins} mins after completion">
+                                        <i data-lucide="repeat" class="w-3 h-3"></i>
+                                        <span>${mins}m</span>${cycleHtml}
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        if (currentUser.role === 'lead') {
+                            const isAllDone = item.total > 0 && item.completed === item.total;
+                            const liClasses = isAllDone ? 'bg-slate-50 border-slate-100 opacity-75' : 'bg-white border-slate-200 shadow-sm';
+                            const textClasses = isAllDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
+                            const safeText = escapeHtml(item.text).replace(/'/g, "\\'");
+                            
+                            li.className = `flex items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md group`;
+                            li.innerHTML = `
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${isAllDone ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-slate-50'} cursor-default">
+                                        ${isAllDone ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : '<i data-lucide="users" class="w-3 h-3 text-slate-400"></i>'}
+                                    </div>
+                                    <span class="truncate select-none ${textClasses}">
+                                        ${escapeHtml(item.text)}
+                                    </span>
+                                    ${timerHtml}
+                                    <span class="ml-auto px-2 py-1 text-[10px] font-bold uppercase rounded-md ${isAllDone ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'} flex-shrink-0">
+                                        ${item.completed}/${item.total} DONE
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1 ml-4 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all focus-within:opacity-100">
+                                    <button onclick="editTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="deleteTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            const isFullyDone = item.completed && (!item.maxCompletions || (item.currentCompletions || 0) >= item.maxCompletions);
+                            const liClasses = isFullyDone ? 'bg-slate-50 border-slate-100 opacity-75' : 'bg-white border-slate-200 shadow-sm';
+                            const textClasses = isFullyDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
+                            const checkboxClasses = item.completed ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 hover:border-indigo-400 bg-white';
+
+                            li.className = `group flex items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md`;
+                            li.innerHTML = `
+                                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="toggleTodo('${item.id}')">
+                                    <button class="checkbox-transition flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${checkboxClasses}">
+                                        ${item.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
+                                    </button>
+                                    <span class="truncate transition-all select-none ${textClasses}">
+                                        ${escapeHtml(item.text)}
+                                    </span>
+                                    ${timerHtml}
+                                </div>
+                            `;
+                        }
+                        ul.appendChild(li);
+                    });
+                    
+                    catDiv.appendChild(ul);
+                    list.appendChild(catDiv);
+                });
+            }
+
+            let activeCount = 0;
+            let totalCount = displayItems.length;
+            
+            if (currentUser.role === 'lead') {
+                activeCount = displayItems.filter(g => g.completed < g.total).length;
+                if (taskCount) taskCount.textContent = `${activeCount} routine${activeCount !== 1 ? 's' : ''} remaining`;
+                if (clearCompletedBtn) clearCompletedBtn.classList.toggle('hidden', activeCount === totalCount || totalCount === 0);
+            } else {
+                activeCount = displayItems.filter(t => {
+                    const isFullyDone = t.completed && (!t.maxCompletions || (t.currentCompletions || 0) >= t.maxCompletions);
+                    return !isFullyDone;
+                }).length;
+                if (taskCount) taskCount.textContent = `${activeCount} task${activeCount !== 1 ? 's' : ''} remaining`;
+                if (clearCompletedBtn) clearCompletedBtn.classList.add('hidden');
+            }
+            
+            lucide.createIcons();
+        }
+
+        if (todoForm) {
+            todoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!fbUser) return;
+                
+                const input = document.getElementById('todo-input');
+                const text = input ? input.value.trim() : '';
+                
+                if (text && currentUser && currentUser.role === 'lead') {
+                    
+                    const currentDayName = getCurrentDayName();
+                    const members = team.filter(t => t.role === 'member');
+                    
+                    const activeMembers = members.filter(t => !(t.restDays && t.restDays.includes(currentDayName)));
+                    
+                    if (members.length === 0) {
+                        window.showModal("No Members Found", "Please add team members in the Settings menu before creating tasks.", false);
+                        return;
+                    }
+                    if (activeMembers.length === 0) {
+                        window.showModal("All Members on Rest", "All team members are on their rest day today (" + currentDayName + ").", false);
+                        return;
+                    }
+
+                    const catInput = document.getElementById('todo-category');
+                    const category = catInput && catInput.value.trim() ? catInput.value.trim() : 'General';
+
+                    const repeatMinsInput = document.getElementById('todo-repeat-mins');
+                    const repeatCountInput = document.getElementById('todo-repeat-count');
+                    
+                    const repeatVal = repeatMinsInput && repeatMinsInput.value ? parseInt(repeatMinsInput.value) : 0;
+                    const resetInterval = repeatVal > 0 ? repeatVal * 60000 : null;
+                    const maxCompletions = repeatCountInput && repeatCountInput.value ? parseInt(repeatCountInput.value) : null;
+                    
+                    if (maxCompletions > 0 && !resetInterval) {
+                        window.showModal("Missing Setup", "If you set a Repeat Count, you must also set the Wait (Mins) interval.", false);
+                        return;
+                    }
+
+                    const groupId = generateId();
+
+                    activeMembers.forEach(member => {
+                        const taskId = generateId();
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', taskId), { 
+                            groupId, 
+                            text, 
+                            category, 
+                            completed: false, 
+                            assigneeId: member.id, 
+                            resetInterval, 
+                            nextReset: null,
+                            maxCompletions,
+                            currentCompletions: 0,
+                            createdAt: Date.now()
+                        }).catch(console.error);
+                    });
+                    
+                    if (input) input.value = '';
+                    if (catInput) catInput.value = '';
+                    if (repeatMinsInput) repeatMinsInput.value = '';
+                    if (repeatCountInput) repeatCountInput.value = '';
+                }
+            });
+        }
+
+        if (clearCompletedBtn) {
+            clearCompletedBtn.addEventListener('click', () => {
+                if(currentUser && currentUser.role === 'lead' && fbUser) {
+                    const groupedMap = new Map();
+                    todos.forEach(t => {
+                        const key = t.groupId || t.text;
+                        if (!groupedMap.has(key)) groupedMap.set(key, { total: 0, completed: 0 });
+                        const group = groupedMap.get(key);
+                        group.total += 1;
+                        const isFullyDone = t.completed && (!t.maxCompletions || (t.currentCompletions || 0) >= t.maxCompletions);
+                        if (isFullyDone) group.completed += 1;
+                    });
+                    
+                    const completedKeys = new Set();
+                    groupedMap.forEach((val, key) => {
+                        if (val.total > 0 && val.completed === val.total) {
+                            completedKeys.add(key);
+                        }
+                    });
+
+                    todos.forEach(t => {
+                        const key = t.groupId || t.text;
+                        if (completedKeys.has(key)) {
+                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                        }
+                    });
+                }
+            });
+        }
+
+        window.toggleTodo = function(id) {
+            if (!fbUser) return;
+            const t = todos.find(task => task.id === id);
+            
+            if (t && currentUser && (currentUser.role === 'lead' || t.assigneeId === currentUser.id)) {
+                const isNowCompleted = !t.completed;
+                let newNextReset = t.nextReset;
+                let newCurrentCompletions = t.currentCompletions || 0;
+                
+                if (isNowCompleted) {
+                    newCurrentCompletions += 1;
+                    if (t.resetInterval && (!t.maxCompletions || newCurrentCompletions < t.maxCompletions)) {
+                        newNextReset = Date.now() + t.resetInterval;
+                    } else {
+                        newNextReset = null; 
+                    }
+                } else {
+                    newNextReset = null; 
+                    newCurrentCompletions = Math.max(0, newCurrentCompletions - 1);
+                }
+                
+                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', id), {
+                    completed: isNowCompleted,
+                    nextReset: newNextReset,
+                    currentCompletions: newCurrentCompletions
+                }).catch(console.error);
+            }
+        };
+
+        window.deleteTodoGroup = function(groupId, text) {
+            if(currentUser && currentUser.role === 'lead' && fbUser) {
+                todos.forEach(t => {
+                    if (groupId && t.groupId === groupId) {
+                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                    } else if (!groupId && t.text === text) {
+                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                    }
+                });
+            }
+        };
+
+        // --- Master Timer Loop for Repetitive Tasks & Auto Record ---
+        setInterval(() => {
+            if (!currentUser || !fbUser) return;
+            const now = Date.now();
+
+            todos.forEach(t => {
+                if (t.completed && t.resetInterval && t.nextReset && now >= t.nextReset) {
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id), {
+                        completed: false,
+                        nextReset: null
+                    }).catch(console.error);
+                }
+            });
+
+            document.querySelectorAll('.countdown-timer-text').forEach(el => {
+                const time = parseInt(el.getAttribute('data-time'));
+                const diff = time - now;
+                if (diff > 0) {
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    el.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                } else {
+                    el.textContent = "0:00";
+                }
+            });
+
+            checkAutoRecord();
+
+        }, 1000); // Check every 1 second
+    </script>
+</body>
+</html>
