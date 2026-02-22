@@ -23,6 +23,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SortableJS for Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -46,6 +49,11 @@
             .main-content-safe {
                 padding-bottom: calc(5rem + env(safe-area-inset-bottom));
             }
+        }
+        .sortable-ghost {
+            opacity: 0.5;
+            background-color: #eef2ff !important; /* Tailwind indigo-50 */
+            border-color: #c7d2fe !important; /* Tailwind indigo-200 */
         }
     </style>
 </head>
@@ -594,7 +602,7 @@
             if (isEnabled) {
                 // I-check kung suportado ng browser
                 if (!("Notification" in window)) {
-                    window.handleShowModal("Not Supported", "Hindi suportado ng iyong browser ang desktop notifications.", false);
+                    window.handleShowModal("Not Supported", "Your browser does not support desktop notifications.", false);
                     e.target.checked = false;
                     return;
                 }
@@ -606,12 +614,12 @@
                         localStorage.setItem('todo_notifications_enabled', 'true');
                         try {
                             new Notification("TaskMaster", { 
-                                body: "Naka-on na ang mga notipikasyon!", 
+                                body: "Notifications are now turned on!", 
                                 icon: appLogoSrc 
                             });
                         } catch(err) {}
                     } else {
-                        window.handleShowModal("Permission Denied", "Paki-allow ang notifications sa browser settings mo para gumana ito.", false);
+                        window.handleShowModal("Permission Denied", "Please allow notifications in your browser settings for this to work.", false);
                         e.target.checked = false;
                         notificationsEnabled = false;
                         localStorage.setItem('todo_notifications_enabled', 'false');
@@ -628,7 +636,7 @@
             if (Notification.permission === "granted") {
                 try {
                     new Notification("Task Ready!", {
-                        body: `Pwede mo nang gawin ulit ang task: "${taskText}"`,
+                        body: `You can now do the task again: "${taskText}"`,
                         icon: appLogoSrc
                     });
                 } catch (e) {
@@ -682,6 +690,35 @@
         document.getElementById('modal-btn-cancel').addEventListener('click', () => window.handleCloseModal(false));
         document.getElementById('modal-btn-confirm').addEventListener('click', () => window.handleCloseModal(true));
 
+        // --- Drag and Drop Logic ---
+        window.handleSortEnd = function(evt) {
+            if (!fbUser) return;
+            const itemEls = Array.from(evt.to.children);
+            
+            // Collect original order numbers inside this specific category list
+            const originalOrders = itemEls.map(el => {
+                const id = el.getAttribute('data-id');
+                const task = todos.find(t => t.id === id || t.groupId === el.getAttribute('data-groupid'));
+                return task && task.order !== undefined ? task.order : (task ? task.createdAt : Date.now());
+            }).sort((a, b) => a - b);
+
+            // Re-assign the orders based on the new visual sequence
+            itemEls.forEach((el, index) => {
+                const groupId = el.getAttribute('data-groupid');
+                const taskId = el.getAttribute('data-id');
+                const newOrder = originalOrders[index];
+
+                if (currentUser && currentUser.role === 'lead' && groupId && groupId !== 'undefined') {
+                    const tasksToUpdate = todos.filter(t => t.groupId === groupId);
+                    tasksToUpdate.forEach(t => {
+                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id), { order: newOrder }).catch(console.error);
+                    });
+                } else if (taskId && taskId !== 'undefined') {
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', taskId), { order: newOrder }).catch(console.error);
+                }
+            });
+        };
+
         // --- Edit Form Modal Logic ---
         let currentEditContext = null;
         const editModalContainer = document.getElementById('edit-modal');
@@ -707,6 +744,43 @@
                 currentEditContext = null;
             }, 200);
         }
+
+        window.handleEditTodoGroup = function(groupId, taskId) {
+            if (currentUser.role !== 'lead' || !fbUser) return;
+            
+            const representative = todos.find(t => t.id === taskId);
+            if (!representative) return;
+
+            const catOptions = taskCategories.map(c => 
+                `<option value="${escapeHtml(c)}" ${c === representative.category ? 'selected' : ''}>${escapeHtml(c)}</option>`
+            ).join('');
+
+            const mins = representative.resetInterval ? representative.resetInterval / 60000 : '';
+            const count = representative.maxCompletions || '';
+
+            const html = `
+                <label class="block text-sm font-medium text-slate-700 mb-1">Task Description</label>
+                <input type="text" id="edit-task-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm" value="${escapeHtml(representative.text)}" required>
+                
+                <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                <select id="edit-task-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm bg-white">
+                    ${catOptions}
+                </select>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Wait (Mins)</label>
+                        <input type="number" id="edit-task-mins" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${mins}" min="1" placeholder="Opt">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Repeat (Times)</label>
+                        <input type="number" id="edit-task-count" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${count}" min="1" placeholder="Opt">
+                    </div>
+                </div>
+            `;
+
+            window.handleOpenEditModal('Edit Task Assignment', html, { type: 'task', groupId, text: representative.text });
+        };
 
         window.handleEditFormSubmit = function(e) {
             e.preventDefault();
@@ -779,6 +853,7 @@
                                         nextReset: null,
                                         maxCompletions: templateTask.maxCompletions || null,
                                         currentCompletions: 0,
+                                        order: templateTask.order !== undefined ? templateTask.order : Date.now(),
                                         createdAt: Date.now()
                                     }).catch(console.error);
                                 }
@@ -921,7 +996,13 @@
             // Listen to Tasks
             onSnapshot(collection(db, ...baseColPath, 'team_tasks'), (snap) => {
                 todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                todos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); 
+                
+                // Sort by Order then CreatedAt
+                todos.sort((a, b) => {
+                    const orderA = a.order !== undefined ? a.order : (a.createdAt || 0);
+                    const orderB = b.order !== undefined ? b.order : (b.createdAt || 0);
+                    return orderA - orderB;
+                });
 
                 // --- SILENT CLEANUP OF ORPHANED TASKS ---
                 if (currentUser && currentUser.role === 'lead' && team.length > 0) {
@@ -1432,6 +1513,8 @@
 
                     categories[cat].forEach(item => {
                         const li = document.createElement('li');
+                        li.setAttribute('data-groupid', item.groupId || '');
+                        li.setAttribute('data-id', item.taskId || item.id || '');
                         
                         let timerHtml = '';
                         if (item.resetInterval) {
@@ -1462,9 +1545,12 @@
                             const textClasses = isAllDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
                             const safeText = escapeHtml(item.text).replace(/'/g, "\\'");
                             
-                            li.className = `flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md group gap-3 sm:gap-0`;
+                            li.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md group gap-3 sm:gap-0`;
                             li.innerHTML = `
-                                <div class="flex items-center gap-3 flex-1 min-w-0 w-full">
+                                <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 w-full">
+                                    <div class="drag-handle cursor-grab flex-shrink-0 text-slate-300 hover:text-indigo-500 touch-none p-1 -ml-1">
+                                        <i data-lucide="grip-vertical" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                    </div>
                                     <div class="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${isAllDone ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-slate-50'} cursor-default">
                                         ${isAllDone ? '<i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>' : '<i data-lucide="users" class="w-3 h-3 text-slate-400"></i>'}
                                     </div>
@@ -1495,10 +1581,18 @@
                             const textClasses = isFullyDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
                             const checkboxClasses = item.completed ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 hover:border-indigo-400 bg-white';
 
-                            li.className = `group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md gap-3 sm:gap-0 cursor-pointer` ;
-                            li.onclick = () => window.handleToggleTodo(item.id);
+                            li.className = `group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md gap-3 sm:gap-0 cursor-pointer` ;
+                            li.onclick = (e) => {
+                                // Prevent clicking the handle from toggling the task
+                                if (!e.target.closest('.drag-handle')) {
+                                    window.handleToggleTodo(item.id);
+                                }
+                            };
                             li.innerHTML = `
-                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                    <div class="drag-handle cursor-grab flex-shrink-0 text-slate-300 hover:text-indigo-500 touch-none p-1 -ml-1">
+                                        <i data-lucide="grip-vertical" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                    </div>
                                     <button class="checkbox-transition flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${checkboxClasses}">
                                         ${item.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
                                     </button>
@@ -1516,6 +1610,16 @@
                     
                     catDiv.appendChild(ul);
                     list.appendChild(catDiv);
+
+                    // Initialize Sortable JS for this category list
+                    if (window.Sortable) {
+                        new Sortable(ul, {
+                            handle: '.drag-handle',
+                            animation: 150,
+                            ghostClass: 'sortable-ghost',
+                            onEnd: window.handleSortEnd
+                        });
+                    }
                 });
             }
 
@@ -1578,6 +1682,7 @@
                     }
 
                     const groupId = generateId();
+                    const createdTime = Date.now();
 
                     activeMembers.forEach(member => {
                         const taskId = generateId();
@@ -1591,7 +1696,8 @@
                             nextReset: null,
                             maxCompletions,
                             currentCompletions: 0,
-                            createdAt: Date.now()
+                            order: createdTime,
+                            createdAt: createdTime
                         }).catch(console.error);
                     });
                     
