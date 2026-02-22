@@ -2,8 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beautiful Todo App</title>
+    <!-- Optimized viewport for mobile PWA (prevents zooming and handles notches) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TaskMaster</title>
+    
+    <!-- PWA & Standalone Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TaskMaster">
+    
+    <!-- App Icons -->
+    <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Inline Web App Manifest (for instant PWA installation) -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22TaskMaster%22%2C%22short_name%22%3A%22TaskMaster%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bcharset%3Dutf-8%2C%253Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20512%20512'%253E%253Crect%20width%3D'512'%20height%3D'512'%20rx%3D'112'%20fill%3D'%25234f46e5'%2F%253E%253Cpath%20fill%3D'none'%20d%3D'M368%20192L224%20336L144%20256'%20stroke%3D'white'%20stroke-width%3D'48'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -23,18 +38,32 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        /* Safe Area Padding for Modern Smartphones (Notches) */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .mobile-nav-safe {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .main-content-safe {
+                padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 h-screen w-full overflow-hidden">
 
+    <!-- App Logo Data URI (Reusable) -->
+    <script>
+        const appLogoSrc = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+    </script>
+
     <!-- ================= LOGIN SCREEN ================= -->
     <div id="login-container" class="h-full w-full flex flex-col items-center justify-center p-4">
-        <div class="mb-8 flex items-center gap-3 text-indigo-600">
-            <i data-lucide="check-square" class="w-10 h-10"></i>
-            <span class="text-3xl font-bold text-slate-800">TaskMaster</span>
+        <div class="mb-8 flex flex-col items-center gap-4 text-indigo-600">
+            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="TaskMaster Logo" class="w-16 h-16 rounded-2xl shadow-md">
+            <span class="text-3xl font-bold text-slate-800 tracking-tight">TaskMaster</span>
         </div>
         
-        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
             <h2 class="text-xl font-bold mb-6 text-center text-slate-800">Sign in to your account</h2>
             
             <!-- Role Toggle -->
@@ -46,7 +75,7 @@
             <!-- Team Lead Form -->
             <form id="form-lead" onsubmit="handleLeadLogin(event)">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Lead Password</label>
-                <input type="password" id="lead-password" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter password">
+                <input type="password" id="lead-password" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-sm" placeholder="Enter password">
                 <p id="lead-error" class="text-red-500 text-xs mb-4 hidden font-medium">Incorrect password. Please try again.</p>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-3 mt-2 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-md">Login as Lead</button>
             </form>
@@ -54,7 +83,7 @@
             <!-- Team Member Form -->
             <form id="form-member" class="hidden" onsubmit="handleMemberLogin(event)">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Select your profile</label>
-                <select id="member-select" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <select id="member-select" class="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-base sm:text-sm">
                     <!-- Populated by JS -->
                 </select>
                 <p id="no-members-msg" class="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg mb-4 hidden">No team members available. The Team Lead must create your account first.</p>
@@ -69,8 +98,8 @@
         <!-- Desktop Sidebar -->
         <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full flex-shrink-0">
             <div class="p-6 flex items-center gap-3 text-indigo-600 border-b border-slate-100">
-                <i data-lucide="check-square" class="w-8 h-8"></i>
-                <span class="text-xl font-bold text-slate-800">TaskMaster</span>
+                <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="Logo" class="w-8 h-8 rounded-lg shadow-sm">
+                <span class="text-xl font-bold text-slate-800 tracking-tight">TaskMaster</span>
             </div>
             
             <nav class="flex-1 px-4 py-6 space-y-2">
@@ -100,13 +129,13 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 h-full overflow-y-auto no-scrollbar pb-20 md:pb-0">
+        <main class="flex-1 h-full overflow-y-auto no-scrollbar pb-24 md:pb-0 main-content-safe">
             
             <!-- Mobile Header -->
-            <header class="md:hidden bg-white px-6 py-4 border-b border-slate-200 sticky top-0 z-10 flex items-center justify-between shadow-sm">
+            <header class="md:hidden bg-white px-4 py-3 border-b border-slate-200 sticky top-0 z-10 flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-2 text-indigo-600">
-                    <i data-lucide="check-square" class="w-6 h-6"></i>
-                    <span class="text-lg font-bold text-slate-800">TaskMaster</span>
+                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234f46e5'/%3E%3Cpath fill='none' d='M368 192L224 336L144 256' stroke='white' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="Logo" class="w-7 h-7 rounded-lg shadow-sm">
+                    <span class="text-lg font-bold text-slate-800 tracking-tight">TaskMaster</span>
                 </div>
                 <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm" id="mobile-avatar">U</div>
             </header>
@@ -116,55 +145,55 @@
                 <!-- ================= VIEW: DASHBOARD ================= -->
                 <div id="view-dashboard" class="hidden space-y-6 animate-fade-in">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800">Welcome back, <span id="dash-name" class="text-indigo-600">User</span>! 👋</h1>
-                        <p class="text-slate-500 mt-2">Here is a summary of your productivity.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Welcome back, <span id="dash-name" class="text-indigo-600">User</span>! 👋</h1>
+                        <p class="text-slate-500 mt-2 text-sm sm:text-base">Here is a summary of your productivity.</p>
                     </div>
 
                     <!-- Stats Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 sm:mt-8">
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
                             <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
                                 <i data-lucide="layers" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-slate-500 font-medium">Total Actions</p>
-                                <p class="text-2xl font-bold text-slate-800" id="stat-total">0</p>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium">Total Actions</p>
+                                <p class="text-xl sm:text-2xl font-bold text-slate-800" id="stat-total">0</p>
                             </div>
                         </div>
                         
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
                             <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                                 <i data-lucide="check-circle" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-slate-500 font-medium">Actions Done</p>
-                                <p class="text-2xl font-bold text-slate-800" id="stat-completed">0</p>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium">Actions Done</p>
+                                <p class="text-xl sm:text-2xl font-bold text-slate-800" id="stat-completed">0</p>
                             </div>
                         </div>
                         
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
                             <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
                                 <i data-lucide="clock" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-slate-500 font-medium">Pending Actions</p>
-                                <p class="text-2xl font-bold text-slate-800" id="stat-pending">0</p>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium">Pending Actions</p>
+                                <p class="text-xl sm:text-2xl font-bold text-slate-800" id="stat-pending">0</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Progress Section -->
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Overall Completion Rate</h3>
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm mt-6">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm sm:text-base">Overall Completion Rate</h3>
                         <div class="w-full bg-slate-100 rounded-full h-4 mb-2 overflow-hidden">
                             <div id="progress-bar" class="bg-indigo-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
                         </div>
-                        <p class="text-sm text-slate-500 text-right" id="progress-text">0% Completed</p>
+                        <p class="text-xs sm:text-sm text-slate-500 text-right" id="progress-text">0% Completed</p>
                     </div>
 
                     <!-- Team Live Progress (Leads Only) -->
-                    <div id="lead-team-progress" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6 hidden">
-                        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <div id="lead-team-progress" class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm mt-6 hidden">
+                        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm sm:text-base">
                             <i data-lucide="activity" class="w-5 h-5 text-indigo-600"></i> Today's Member Progress
                         </h3>
                         <div id="team-progress-list" class="space-y-4">
@@ -176,19 +205,19 @@
                 <!-- ================= VIEW: TASKS ================= -->
                 <div id="view-tasks" class="block animate-fade-in">
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                        <div class="bg-indigo-600 p-5 sm:p-6 text-white flex justify-between items-center">
                             <div>
-                                <h1 class="text-2xl font-bold flex items-center gap-3">
-                                    <i data-lucide="list-todo" class="w-7 h-7"></i> My Tasks
+                                <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2 sm:gap-3">
+                                    <i data-lucide="list-todo" class="w-6 h-6 sm:w-7 sm:h-7"></i> My Tasks
                                 </h1>
-                                <p class="text-indigo-200 text-sm mt-1" id="date-display"></p>
+                                <p class="text-indigo-200 text-xs sm:text-sm mt-1" id="date-display"></p>
                             </div>
-                            <span id="rest-day-badge" class="hidden bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">REST DAY</span>
+                            <span id="rest-day-badge" class="hidden bg-white/20 text-white px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider">REST DAY</span>
                         </div>
 
-                        <div class="p-6">
+                        <div class="p-4 sm:p-6">
                             <div id="lead-only-form-container">
-                                <form id="todo-form" class="mb-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                <form id="todo-form" class="mb-6 sm:mb-8 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
                                     <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
                                         <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i> Create New Task
                                     </h3>
@@ -196,29 +225,29 @@
                                         <div class="flex flex-col sm:flex-row gap-4">
                                             <div class="w-full sm:w-1/3">
                                                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
-                                                <select id="todo-category" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner cursor-pointer">
+                                                <select id="todo-category" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-base sm:text-sm shadow-inner cursor-pointer">
                                                     <!-- Populated by JS -->
                                                 </select>
                                             </div>
                                             <div class="flex-1">
                                                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Task Description <span class="text-red-400">*</span></label>
-                                                <input type="text" id="todo-input" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="What routine needs to be done?" required>
+                                                <input type="text" id="todo-input" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-base sm:text-sm shadow-inner" placeholder="What routine needs to be done?" required>
                                             </div>
                                         </div>
                                         <div class="flex flex-col sm:flex-row gap-4 items-end">
-                                            <div class="w-full sm:w-1/3 flex gap-4">
+                                            <div class="w-full sm:w-1/3 flex gap-3 sm:gap-4">
                                                 <div class="w-1/2">
-                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Wait (Mins)</label>
+                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-center sm:text-left">Wait (Mins)</label>
                                                     <div class="relative">
                                                         <i data-lucide="clock" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                                        <input type="number" id="todo-repeat-mins" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="Opt" min="1">
+                                                        <input type="number" id="todo-repeat-mins" class="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-base sm:text-sm shadow-inner" placeholder="Opt" min="1">
                                                     </div>
                                                 </div>
                                                 <div class="w-1/2">
-                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Repeat</label>
+                                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-center sm:text-left">Repeat</label>
                                                     <div class="relative">
                                                         <i data-lucide="repeat" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                                        <input type="number" id="todo-repeat-count" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-sm shadow-inner" placeholder="Opt" min="1">
+                                                        <input type="number" id="todo-repeat-count" class="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 transition-all text-base sm:text-sm shadow-inner" placeholder="Opt" min="1">
                                                     </div>
                                                 </div>
                                             </div>
@@ -256,17 +285,17 @@
                 <!-- ================= VIEW: REPORTS ================= -->
                 <div id="view-reports" class="hidden animate-fade-in">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h1 class="text-3xl font-bold text-slate-800">Daily Reports</h1>
-                        <button onclick="archiveDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Daily Reports</h1>
+                        <button onclick="archiveDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center">
                             <i data-lucide="archive" class="w-4 h-4"></i> End Day & Record
                         </button>
                     </div>
                     
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-6">
+                        <div class="p-4 sm:p-6">
                             <p class="text-slate-500 text-sm mb-6">Archive the current tasks to save a snapshot of who completed their routines today. Doing so will record the statistics and clear the active tasks for tomorrow.</p>
                             
-                            <div id="reports-list" class="space-y-6">
+                            <div id="reports-list" class="space-y-4 sm:space-y-6">
                                 <!-- Populated by JS -->
                             </div>
                             
@@ -283,26 +312,26 @@
 
                 <!-- ================= VIEW: SETTINGS ================= -->
                 <div id="view-settings" class="hidden max-w-2xl animate-fade-in">
-                    <h1 class="text-3xl font-bold text-slate-800 mb-6">Settings & Team</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-6">Settings & Team</h1>
                     
                     <!-- Profile & Logout Section -->
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-                        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <div class="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
-                                <h2 class="text-lg font-bold text-slate-800 mb-1">My Profile</h2>
-                                <p class="text-sm text-slate-500">Manage your session.</p>
+                                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-0.5">My Profile</h2>
+                                <p class="text-xs sm:text-sm text-slate-500">Manage your session.</p>
                             </div>
-                            <span id="role-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"></span>
+                            <span id="role-badge" class="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider"></span>
                         </div>
-                        <div class="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-2xl shadow-sm" id="profile-avatar">U</div>
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xl sm:text-2xl shadow-sm" id="profile-avatar">U</div>
                                 <div>
-                                    <p class="font-bold text-slate-800 text-lg" id="profile-name">User</p>
-                                    <p class="text-sm text-slate-500" id="profile-role">Role</p>
+                                    <p class="font-bold text-slate-800 text-base sm:text-lg" id="profile-name">User</p>
+                                    <p class="text-xs sm:text-sm text-slate-500" id="profile-role">Role</p>
                                 </div>
                             </div>
-                            <button onclick="logout()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium flex items-center justify-center gap-2 shadow-sm">
+                            <button onclick="logout()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto">
                                 <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
                             </button>
                         </div>
@@ -310,14 +339,14 @@
 
                     <!-- Automation Settings (Leads Only) -->
                     <div id="automation-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
-                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <div class="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center gap-4">
                             <div>
-                                <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                    <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i> Auto Record & Clear
+                                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                    <i data-lucide="clock" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Auto Record
                                 </h2>
-                                <p class="text-sm text-slate-500">Automatically end the day and record progress at 8:00 AM (PHT).</p>
+                                <p class="text-xs sm:text-sm text-slate-500">Automatically end the day and record progress at 8:00 AM (PHT).</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
                                 <input type="checkbox" id="auto-record-toggle" class="sr-only peer" onchange="toggleAutoRecord(event)">
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                             </label>
@@ -326,29 +355,29 @@
 
                     <!-- Team Management (Leads Only) -->
                     <div id="team-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
-                        <div class="p-6 border-b border-slate-100">
-                            <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Team Management
+                        <div class="p-4 sm:p-6 border-b border-slate-100">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="users" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Team Management
                             </h2>
-                            <p class="text-sm text-slate-500">Add new members and set their rest days (Leads only).</p>
+                            <p class="text-xs sm:text-sm text-slate-500">Add new members and set their rest days.</p>
                         </div>
-                        <div class="p-6 space-y-4">
+                        <div class="p-4 sm:p-6 space-y-4">
                             <form onsubmit="addTeamMember(event)" class="flex flex-col gap-3">
-                                <div class="flex gap-3">
-                                    <input type="text" id="new-member-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50" placeholder="New member's full name" required>
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <input type="text" id="new-member-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-base sm:text-sm" placeholder="New member's full name" required>
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
                                         <i data-lucide="user-plus" class="w-4 h-4"></i> Add
                                     </button>
                                 </div>
                                 <div class="text-xs text-slate-500 font-medium mt-1">Select Rest Days (Optional):</div>
-                                <div class="flex flex-wrap gap-3 mt-1">
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Monday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Mon</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Tuesday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Tue</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Wednesday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Wed</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Thursday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Thu</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Friday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Fri</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Saturday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Sat</label>
-                                    <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" value="Sunday" class="member-rest-day w-4 h-4 text-indigo-600 rounded"> Sun</label>
+                                <div class="flex flex-wrap gap-2 sm:gap-3 mt-1">
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Monday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Mon</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Tuesday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Tue</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Wednesday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Wed</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Thursday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Thu</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Friday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Fri</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Saturday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Sat</label>
+                                    <label class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200"><input type="checkbox" value="Sunday" class="member-rest-day w-3.5 h-3.5 text-indigo-600 rounded"> Sun</label>
                                 </div>
                             </form>
                             <div class="mt-4 border border-slate-100 rounded-xl overflow-hidden">
@@ -359,16 +388,16 @@
 
                     <!-- Category Management (Leads Only) -->
                     <div id="category-management-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 hidden">
-                        <div class="p-6 border-b border-slate-100">
-                            <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-                                <i data-lucide="tags" class="w-5 h-5 text-indigo-600"></i> Category Management
+                        <div class="p-4 sm:p-6 border-b border-slate-100">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="tags" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Category Management
                             </h2>
-                            <p class="text-sm text-slate-500">Create predefined categories for grouping tasks.</p>
+                            <p class="text-xs sm:text-sm text-slate-500">Create predefined categories for grouping tasks.</p>
                         </div>
-                        <div class="p-6 space-y-4">
-                            <form onsubmit="addCategory(event)" class="flex gap-3">
-                                <input type="text" id="new-category-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50" placeholder="New category name (e.g. Morning Shift)" required>
-                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2">
+                        <div class="p-4 sm:p-6 space-y-4">
+                            <form onsubmit="addCategory(event)" class="flex flex-col sm:flex-row gap-3">
+                                <input type="text" id="new-category-name" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-base sm:text-sm" placeholder="New category name (e.g. Morning Shift)" required>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Add
                                 </button>
                             </form>
@@ -379,13 +408,13 @@
                     </div>
 
                     <!-- Danger Zone (Leads Only) -->
-                    <div id="danger-zone-section" class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden hidden">
-                        <div class="p-6">
-                            <h2 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
-                                <i data-lucide="alert-triangle" class="w-5 h-5"></i> Danger Zone
+                    <div id="danger-zone-section" class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden mb-6 hidden">
+                        <div class="p-4 sm:p-6">
+                            <h2 class="text-base sm:text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 sm:w-5 sm:h-5"></i> Danger Zone
                             </h2>
-                            <p class="text-sm text-red-600 mb-4">This action cannot be undone. It will permanently delete all tasks.</p>
-                            <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm">
+                            <p class="text-xs sm:text-sm text-red-600 mb-4">This action cannot be undone. It will permanently delete all tasks.</p>
+                            <button onclick="clearAllData()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
                                 <i data-lucide="trash" class="w-4 h-4"></i> Delete All Data
                             </button>
                         </div>
@@ -395,8 +424,8 @@
             </div>
         </main>
 
-        <!-- Mobile Bottom Navigation -->
-        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around pb-safe pt-2 px-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <!-- Mobile Bottom Navigation (Safe Area compatible) -->
+        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around mobile-nav-safe pt-2 px-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <button onclick="switchView('dashboard')" class="nav-item-mobile flex flex-col items-center p-2 text-slate-500 hover:text-indigo-600 transition-colors" data-view="dashboard">
                 <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
                 <span class="text-[10px] font-medium">Dashboard</span>
@@ -417,28 +446,28 @@
     </div>
 
     <!-- ================= CUSTOM MODAL ================= -->
-    <div id="custom-modal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl transform scale-95 transition-transform duration-200" id="custom-modal-content">
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-auto shadow-xl transform scale-95 transition-transform duration-200" id="custom-modal-content">
             <h3 id="modal-title" class="text-lg font-bold text-slate-800 mb-2">Message</h3>
             <p id="modal-message" class="text-slate-600 mb-6 text-sm">...</p>
             <div class="flex gap-3 justify-end">
-                <button id="modal-btn-cancel" class="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 hidden transition-colors">Cancel</button>
-                <button id="modal-btn-confirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">OK</button>
+                <button id="modal-btn-cancel" class="px-4 py-2 rounded-xl font-medium text-slate-600 hover:bg-slate-100 hidden transition-colors">Cancel</button>
+                <button id="modal-btn-confirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors">OK</button>
             </div>
         </div>
     </div>
 
     <!-- ================= EDIT FORM MODAL ================= -->
-    <div id="edit-modal" class="fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl transform scale-95 transition-transform duration-200" id="edit-modal-content">
-            <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Edit</h3>
-            <form id="edit-modal-form" onsubmit="handleEditFormSubmit(event)">
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-200 p-4">
+        <div class="bg-white rounded-2xl p-5 sm:p-6 max-w-md w-full mx-auto shadow-xl transform scale-95 transition-transform duration-200 max-h-[90vh] flex flex-col" id="edit-modal-content">
+            <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3 flex-shrink-0">Edit</h3>
+            <form id="edit-modal-form" onsubmit="handleEditFormSubmit(event)" class="overflow-y-auto no-scrollbar flex-1">
                 <div id="edit-modal-body" class="space-y-4">
                     <!-- Injected Dynamically -->
                 </div>
-                <div class="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors shadow-sm">Save Changes</button>
+                <div class="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-100 flex-shrink-0">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -481,11 +510,11 @@
             if (isConfirm) {
                 btnCancel.classList.remove('hidden');
                 btnConfirm.textContent = 'Confirm';
-                btnConfirm.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors';
+                btnConfirm.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors';
             } else {
                 btnCancel.classList.add('hidden');
                 btnConfirm.textContent = 'OK';
-                btnConfirm.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors';
+                btnConfirm.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors';
             }
             
             modalCallback = callback;
@@ -602,7 +631,6 @@
             }
             window.closeEditModal();
         }
-
 
         // --- PHT Time Helper Functions ---
         function getPHTDateObj() {
@@ -791,7 +819,7 @@
             e.preventDefault();
             const pass = document.getElementById('lead-password').value;
             document.getElementById('lead-password').value = '';
-            performLogin('u1'); // u1 is always the lead
+            performLogin('u1'); 
         };
 
         window.handleMemberLogin = function(e) {
@@ -913,32 +941,29 @@
                     teamList.innerHTML = `<li class="p-4 text-sm text-slate-500 text-center bg-white">No members added yet.</li>`;
                 } else {
                     teamList.innerHTML = team.map(t => {
+                        if (t.role === 'lead') return ''; // Don't show lead in the manageable list for now
                         const restBadge = t.restDays && t.restDays.length > 0 
                             ? `<div class="text-[10px] text-slate-500 font-medium mt-1 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded inline-block border border-slate-200">Rest: ${t.restDays.join(', ')}</div>` 
                             : '';
                         
-                        const actionsHtml = t.role !== 'lead' ? `
-                            <div class="flex items-center gap-1">
-                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-indigo-50 transition-colors" title="Edit Member"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteMember('${t.id}')" class="text-slate-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors" title="Delete Member"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        ` : `
-                            <div class="flex items-center gap-1">
-                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-indigo-50 transition-colors" title="Edit Name"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        const actionsHtml = `
+                            <div class="flex items-center gap-1 mt-2 sm:mt-0">
+                                <button onclick="editMember('${t.id}')" class="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-colors" title="Edit Member"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="deleteMember('${t.id}')" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors ml-1" title="Delete Member"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
 
                         return `
-                        <li class="flex justify-between items-center p-4 bg-white hover:bg-slate-50 transition-colors">
+                        <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 bg-white hover:bg-slate-50 transition-colors">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full ${t.role === 'lead' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-600'} flex items-center justify-center font-bold text-xs">${t.name.charAt(0).toUpperCase()}</div>
+                                <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm flex-shrink-0">${t.name.charAt(0).toUpperCase()}</div>
                                 <div>
                                     <span class="font-bold text-sm text-slate-700 block">${escapeHtml(t.name)}</span>
                                     ${restBadge}
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md ${t.role === 'lead' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}">${t.role}</span>
+                            <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-3 sm:mt-0">
+                                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-slate-200 text-slate-600 sm:hidden">${t.role}</span>
                                 ${actionsHtml}
                             </div>
                         </li>
@@ -956,15 +981,15 @@
                         const downDisabled = index === taskCategories.length - 1 ? 'opacity-30 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50';
                         return `
                         <li class="flex justify-between items-center p-4 bg-white hover:bg-slate-50 transition-colors">
-                            <span class="font-medium text-slate-700 flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4 text-slate-400"></i> ${escapeHtml(c)}</span>
-                            <div class="flex items-center gap-1">
-                                <button onclick="moveCategory(${index}, -1)" class="transition-colors p-2 rounded-lg focus:outline-none ${upDisabled}" ${index === 0 ? 'disabled' : ''} title="Move Up">
+                            <span class="font-medium text-slate-700 flex items-center gap-2 text-sm sm:text-base"><i data-lucide="tag" class="w-4 h-4 text-slate-400"></i> ${escapeHtml(c)}</span>
+                            <div class="flex items-center gap-1 sm:gap-2">
+                                <button onclick="moveCategory(${index}, -1)" class="transition-colors p-2 rounded-lg focus:outline-none ${upDisabled} hidden sm:block" ${index === 0 ? 'disabled' : ''} title="Move Up">
                                     <i data-lucide="arrow-up" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="moveCategory(${index}, 1)" class="transition-colors p-2 rounded-lg focus:outline-none ${downDisabled}" ${index === taskCategories.length - 1 ? 'disabled' : ''} title="Move Down">
+                                <button onclick="moveCategory(${index}, 1)" class="transition-colors p-2 rounded-lg focus:outline-none ${downDisabled} hidden sm:block" ${index === taskCategories.length - 1 ? 'disabled' : ''} title="Move Down">
                                     <i data-lucide="arrow-down" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="editCategory(${index}, '${escapeHtml(c)}')" class="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-indigo-50 focus:outline-none ml-2" title="Edit">
+                                <button onclick="editCategory(${index}, '${escapeHtml(c)}')" class="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-indigo-50 focus:outline-none sm:ml-2" title="Edit">
                                     <i data-lucide="edit-2" class="w-4 h-4"></i>
                                 </button>
                                 <button onclick="deleteCategory(${index})" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="Delete">
@@ -990,7 +1015,7 @@
             if (currentUser.role !== 'lead' || !fbUser) return;
             const html = `
                 <label class="block text-sm font-medium text-slate-700 mb-1">Category Name</label>
-                <input type="text" id="edit-cat-input" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${oldName}" required>
+                <input type="text" id="edit-cat-input" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${oldName}" required>
             `;
             window.openEditModal('Edit Category', html, { type: 'category', index, oldName });
         };
@@ -1007,7 +1032,7 @@
                 <div class="text-sm font-medium text-slate-700 mb-2">Rest Days</div>
                 <div class="flex flex-wrap gap-3">
                     ${days.map(d => `
-                        <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer">
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200">
                             <input type="checkbox" value="${d}" class="edit-member-rest-day w-4 h-4 text-indigo-600 rounded" ${restDays.includes(d) ? 'checked' : ''}> ${d.substring(0,3)}
                         </label>
                     `).join('')}
@@ -1016,7 +1041,7 @@
 
             const html = `
                 <label class="block text-sm font-medium text-slate-700 mb-1">Member Name</label>
-                <input type="text" id="edit-mem-name" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4" value="${escapeHtml(member.name)}" required>
+                <input type="text" id="edit-mem-name" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm" value="${escapeHtml(member.name)}" required>
                 ${checksHtml}
             `;
             window.openEditModal('Edit Profile', html, { type: 'member', memberId });
@@ -1046,21 +1071,21 @@
 
             const html = `
                 <label class="block text-sm font-medium text-slate-700 mb-1">Task Description</label>
-                <input type="text" id="edit-task-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4" value="${escapeHtml(representative.text)}" required>
+                <input type="text" id="edit-task-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm" value="${escapeHtml(representative.text)}" required>
                 
                 <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                <select id="edit-task-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4">
+                <select id="edit-task-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none mb-4 text-base sm:text-sm bg-white">
                     ${catOptions}
                 </select>
 
-                <div class="flex gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Wait (Mins)</label>
-                        <input type="number" id="edit-task-mins" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${mins}" min="1" placeholder="Opt">
+                        <input type="number" id="edit-task-mins" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${mins}" min="1" placeholder="Opt">
                     </div>
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Repeat (Times)</label>
-                        <input type="number" id="edit-task-count" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value="${count}" min="1" placeholder="Opt">
+                        <input type="number" id="edit-task-count" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-base sm:text-sm" value="${count}" min="1" placeholder="Opt">
                     </div>
                 </div>
             `;
@@ -1158,14 +1183,14 @@
                         const mPerc = mTotal === 0 ? 0 : Math.round((mComp / mTotal) * 100);
                         
                         return `
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium text-slate-700 w-1/4 truncate">${escapeHtml(m.name)}</span>
-                            <div class="flex-1 mx-4 bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span class="font-medium text-slate-700 w-full sm:w-1/4 truncate text-sm sm:text-base">${escapeHtml(m.name)}</span>
+                            <div class="flex-1 w-full bg-slate-100 rounded-full h-2 overflow-hidden order-last sm:order-none mx-0 sm:mx-4">
                                 <div class="${mPerc === 100 && mTotal > 0 ? 'bg-emerald-500' : 'bg-indigo-400'} h-2 rounded-full transition-all" style="width: ${mPerc}%"></div>
                             </div>
-                            <span class="text-xs font-bold w-12 text-right ${mPerc === 100 && mTotal > 0 ? 'text-emerald-600' : 'text-slate-500'}">${mComp}/${mTotal}</span>
+                            <span class="text-xs font-bold w-full sm:w-12 text-left sm:text-right ${mPerc === 100 && mTotal > 0 ? 'text-emerald-600' : 'text-slate-500'}">${mComp}/${mTotal}</span>
                         </div>`;
-                    }).join('');
+                    }).join('<hr class="my-3 border-slate-100 sm:hidden">');
                 }
             } else if (leadTeamProgress) {
                 leadTeamProgress.classList.add('hidden');
@@ -1187,18 +1212,18 @@
                 listEl.classList.remove('hidden');
                 
                 listEl.innerHTML = historyReports.slice().reverse().map(report => `
-                    <div class="border border-slate-200 rounded-xl p-4 sm:p-5 bg-slate-50">
-                        <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
-                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                    <div class="border border-slate-200 rounded-2xl p-4 sm:p-5 bg-slate-50">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b border-slate-200 pb-4 gap-2">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
                                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> ${escapeHtml(report.date)}
                             </h4>
-                            <span class="text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200">Total Actions: ${report.totalTasks}</span>
+                            <span class="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 inline-block w-max">Total Actions: ${report.totalTasks}</span>
                         </div>
                         <div class="space-y-3">
                             ${(report.memberStats || []).map(m => `
-                                <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                                     <span class="text-sm font-medium text-slate-700 flex-1 truncate">${escapeHtml(m.name)}</span>
-                                    <span class="text-xs font-bold px-2 py-1 rounded-md ${m.completed === m.total && m.total > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                    <span class="text-xs font-bold px-2.5 py-1.5 rounded-lg ${m.completed === m.total && m.total > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
                                         ${m.completed} / ${m.total} Done
                                     </span>
                                 </div>
@@ -1275,7 +1300,6 @@
             list.innerHTML = '';
             
             let displayItems = [];
-            const currentDayName = getCurrentDayName();
             
             if (currentUser.role === 'lead') {
                 const groupedMap = new Map();
@@ -1328,7 +1352,7 @@
                                 <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg"><i data-lucide="folder" class="w-4 h-4"></i></span>
                                 ${escapeHtml(cat)}
                             </h3>
-                            <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">${categories[cat].length} Task${categories[cat].length > 1 ? 's' : ''}</span>
+                            <span class="text-[10px] sm:text-xs font-bold text-slate-400 bg-slate-100 px-2 sm:px-3 py-1 rounded-full border border-slate-200">${categories[cat].length} Task${categories[cat].length > 1 ? 's' : ''}</span>
                         </div>
                     `;
                     
@@ -1344,7 +1368,7 @@
                             if (currentUser.role !== 'lead' && item.nextReset && item.completed) {
                                 const cyclesHtml = item.maxCompletions ? `<span class="ml-1 text-amber-700/70">(${item.currentCompletions || 0}/${item.maxCompletions})</span>` : '';
                                 timerHtml = `
-                                    <div class="ml-2 flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 flex-shrink-0">
+                                    <div class="ml-2 flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 flex-shrink-0">
                                         <i data-lucide="timer" class="w-3 h-3"></i>
                                         <span class="countdown-timer-text" data-time="${item.nextReset}">--:--</span>
                                         ${cyclesHtml}
@@ -1353,7 +1377,7 @@
                             } else {
                                 const cycleHtml = item.maxCompletions ? (currentUser.role === 'lead' ? `<span class="ml-1">(${item.maxCompletions}x)</span>` : `<span class="ml-1">(${item.currentCompletions || 0}/${item.maxCompletions})</span>`) : '';
                                 timerHtml = `
-                                    <div class="ml-2 flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 flex-shrink-0" title="Repeats ${mins} mins after completion">
+                                    <div class="ml-2 flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 flex-shrink-0" title="Repeats ${mins} mins after completion">
                                         <i data-lucide="repeat" class="w-3 h-3"></i>
                                         <span>${mins}m</span>${cycleHtml}
                                     </div>
@@ -1367,27 +1391,31 @@
                             const textClasses = isAllDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
                             const safeText = escapeHtml(item.text).replace(/'/g, "\\'");
                             
-                            li.className = `flex items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md group`;
+                            li.className = `flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md group gap-3 sm:gap-0`;
                             li.innerHTML = `
-                                <div class="flex items-center gap-3 flex-1 min-w-0">
-                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${isAllDone ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-slate-50'} cursor-default">
-                                        ${isAllDone ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : '<i data-lucide="users" class="w-3 h-3 text-slate-400"></i>'}
+                                <div class="flex items-center gap-3 flex-1 min-w-0 w-full">
+                                    <div class="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${isAllDone ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-slate-50'} cursor-default">
+                                        ${isAllDone ? '<i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>' : '<i data-lucide="users" class="w-3 h-3 text-slate-400"></i>'}
                                     </div>
-                                    <span class="truncate select-none ${textClasses}">
+                                    <span class="truncate select-none ${textClasses} text-sm sm:text-base">
                                         ${escapeHtml(item.text)}
                                     </span>
-                                    ${timerHtml}
-                                    <span class="ml-auto px-2 py-1 text-[10px] font-bold uppercase rounded-md ${isAllDone ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'} flex-shrink-0">
-                                        ${item.completed}/${item.total} DONE
-                                    </span>
                                 </div>
-                                <div class="flex items-center gap-1 ml-4 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all focus-within:opacity-100">
-                                    <button onclick="editTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
-                                        <i data-lucide="edit-2" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="deleteTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
+                                <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto pl-8 sm:pl-0 gap-3">
+                                    <div class="flex items-center gap-2">
+                                        ${timerHtml}
+                                        <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-md ${isAllDone ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'} flex-shrink-0">
+                                            ${item.completed}/${item.total} DONE
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all focus-within:opacity-100">
+                                        <button onclick="editTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="deleteTodoGroup('${item.groupId || ''}', '${safeText}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             `;
                         } else {
@@ -1396,15 +1424,18 @@
                             const textClasses = isFullyDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium';
                             const checkboxClasses = item.completed ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 hover:border-indigo-400 bg-white';
 
-                            li.className = `group flex items-center justify-between p-3 sm:p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md`;
+                            li.className = `group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${liClasses} transition-all hover:shadow-md gap-3 sm:gap-0 cursor-pointer` ;
+                            li.onclick = () => window.toggleTodo(item.id);
                             li.innerHTML = `
-                                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="toggleTodo('${item.id}')">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
                                     <button class="checkbox-transition flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${checkboxClasses}">
                                         ${item.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
                                     </button>
-                                    <span class="truncate transition-all select-none ${textClasses}">
+                                    <span class="truncate transition-all select-none ${textClasses} text-sm sm:text-base">
                                         ${escapeHtml(item.text)}
                                     </span>
+                                </div>
+                                <div class="flex items-center justify-end w-full sm:w-auto pl-9 sm:pl-0">
                                     ${timerHtml}
                                 </div>
                             `;
@@ -1494,7 +1525,6 @@
                     });
                     
                     if (input) input.value = '';
-                    if (catInput) catInput.value = '';
                     if (repeatMinsInput) repeatMinsInput.value = '';
                     if (repeatCountInput) repeatCountInput.value = '';
                 }
