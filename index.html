@@ -274,7 +274,7 @@
                             
                             <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-sm">
                                 <span id="task-count" class="text-slate-500 font-medium">0 tasks remaining</span>
-                                <button id="clear-completed" class="text-slate-400 hover:text-red-500 transition-colors hidden font-medium">
+                                <button id="clear-completed" onclick="window.handleClearAllData()" class="text-slate-400 hover:text-red-500 transition-colors hidden font-medium">
                                     Clear completed
                                 </button>
                             </div>
@@ -549,31 +549,33 @@
                 initAudio();
                 if (!audioCtx) return;
                 
-                // First ding
-                const osc1 = audioCtx.createOscillator();
-                const gain1 = audioCtx.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                gain1.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain1.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.05);
-                gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc1.connect(gain1);
-                gain1.connect(audioCtx.destination);
-                osc1.start(audioCtx.currentTime);
-                osc1.stop(audioCtx.currentTime + 0.5);
+                // Play a longer, 4-note ascending chime
+                const notes = [
+                    { freq: 523.25, delay: 0.0, dur: 1.5 },   // C5
+                    { freq: 659.25, delay: 0.2, dur: 1.5 },   // E5
+                    { freq: 783.99, delay: 0.4, dur: 2.0 },   // G5
+                    { freq: 1046.50, delay: 0.6, dur: 2.5 }   // C6
+                ];
 
-                // Second higher ding
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
-                gain2.gain.setValueAtTime(0, audioCtx.currentTime + 0.15);
-                gain2.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.2);
-                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.65);
-                osc2.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc2.start(audioCtx.currentTime + 0.15);
-                osc2.stop(audioCtx.currentTime + 0.65);
+                notes.forEach(note => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'sine'; // Smooth bell-like tone
+                    osc.frequency.setValueAtTime(note.freq, audioCtx.currentTime + note.delay);
+                    
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime + note.delay);
+                    // Quick fade in
+                    gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + note.delay + 0.1);
+                    // Long fade out
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + note.delay + note.dur);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.start(audioCtx.currentTime + note.delay);
+                    osc.stop(audioCtx.currentTime + note.delay + note.dur);
+                });
 
             } catch(e) { console.error("Audio play error", e); }
         }
