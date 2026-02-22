@@ -596,11 +596,52 @@
                 const newName = document.getElementById('edit-mem-name').value.trim();
                 const checks = document.querySelectorAll('.edit-member-rest-day:checked');
                 const restDays = Array.from(checks).map(c => c.value);
+                const memberId = currentEditContext.memberId;
                 
                 if (newName) {
-                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', currentEditContext.memberId), {
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', memberId), {
                         name: newName,
                         restDays: restDays
+                    }).then(() => {
+                        // RE-SYNC TASKS BASED ON REST DAYS
+                        const currentDayName = getCurrentDayName();
+                        if (restDays.includes(currentDayName)) {
+                            // Member is now on rest day. Delete their tasks for today.
+                            todos.forEach(t => {
+                                if (t.assigneeId === memberId) {
+                                    deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                                }
+                            });
+                        } else {
+                            // Member is active. Assign them any tasks they are missing.
+                            const memberTaskGroupIds = new Set(todos.filter(t => t.assigneeId === memberId).map(t => t.groupId || t.text));
+                            const uniqueGroups = new Map();
+                            
+                            todos.forEach(t => {
+                                if (t.assigneeId !== memberId) {
+                                    const key = t.groupId || t.text;
+                                    if (!uniqueGroups.has(key)) uniqueGroups.set(key, t);
+                                }
+                            });
+
+                            uniqueGroups.forEach((templateTask, key) => {
+                                if (!memberTaskGroupIds.has(key)) {
+                                    const taskId = generateId();
+                                    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', taskId), { 
+                                        groupId: templateTask.groupId || generateId(), 
+                                        text: templateTask.text, 
+                                        category: templateTask.category || 'General', 
+                                        completed: false, 
+                                        assigneeId: memberId, 
+                                        resetInterval: templateTask.resetInterval || null, 
+                                        nextReset: null,
+                                        maxCompletions: templateTask.maxCompletions || null,
+                                        currentCompletions: 0,
+                                        createdAt: Date.now()
+                                    }).catch(console.error);
+                                }
+                            });
+                        }
                     }).catch(console.error);
                 }
             }
@@ -738,6 +779,19 @@
             onSnapshot(collection(db, ...baseColPath, 'team_tasks'), (snap) => {
                 todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 todos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); 
+
+                // --- SILENT CLEANUP OF ORPHANED TASKS ---
+                // If a member was deleted previously, their tasks might still exist.
+                // The Lead will automatically clean them up in the background.
+                if (currentUser && currentUser.role === 'lead' && team.length > 0) {
+                    const validMemberIds = new Set(team.map(m => m.id));
+                    todos.forEach(t => {
+                        if (!validMemberIds.has(t.assigneeId)) {
+                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(e => {});
+                        }
+                    });
+                }
+
                 renderTasks();
                 if (!document.getElementById('view-dashboard').classList.contains('hidden')) renderDashboard();
             }, console.error);
@@ -1052,13 +1106,13 @@
             if (currentUser.role !== 'lead' || !fbUser) return;
             window.handleShowModal("Delete Member", "Are you sure? This will permanently remove the member from your team.", true, (confirmed) => {
                 if (confirmed) {
-                    deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', memberId)).catch(console.error);
-                    
-                    todos.forEach(t => {
-                        if (t.assigneeId === memberId) {
-                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
-                        }
-                    });
+                    deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', memberId)).then(() => {
+                        todos.forEach(t => {
+                            if (t.assigneeId === memberId) {
+                                deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
+                            }
+                        });
+                    }).catch(console.error);
                 }
             });
         };
@@ -1116,30 +1170,6 @@
             }
         };
 
-        window.handleDeleteCategory = function(index) {
-            if (currentUser && currentUser.role === 'lead' && fbUser) {
-                window.handleShowModal("Delete Category", `Are you sure you want to delete the category "${taskCategories[index]}"?`, true, (confirmed) => {
-                    if (confirmed) {
-                        const updatedCats = [...taskCategories];
-                        updatedCats.splice(index, 1);
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
-                            .catch(console.error);
-                    }
-                });
-            }
-        };
-
-        window.handleMoveCategory = function(index, direction) {
-            if (!currentUser || currentUser.role !== 'lead' || !fbUser) return;
-            const newIndex = index + direction;
-            if (newIndex >= 0 && newIndex < taskCategories.length) {
-                const updatedCats = [...taskCategories];
-                [updatedCats[index], updatedCats[newIndex]] = [updatedCats[newIndex], updatedCats[index]];
-                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_config', 'settings'), { categories: updatedCats }, { merge: true })
-                    .catch(console.error);
-            }
-        };
-
         window.handleAddTeamMember = function(e) {
             e.preventDefault();
             if (!fbUser || !currentUser) return;
@@ -1151,12 +1181,45 @@
 
             if(name && currentUser.role === 'lead') {
                 const newId = 'u' + Date.now();
+                const currentDayName = getCurrentDayName();
+                
                 setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_members', newId), {
                     id: newId,
                     name: name,
                     role: 'member',
                     restDays: restDays
+                }).then(() => {
+                    // Kapag na-add ang member, bigyan agad siya ng kopya ng lahat ng umiiral na tasks
+                    if (!restDays.includes(currentDayName)) {
+                        const uniqueGroups = new Map();
+                        todos.forEach(t => {
+                            // Only copy tasks from active members (don't copy from deleted ones)
+                            if (team.some(m => m.id === t.assigneeId)) {
+                                const key = t.groupId || t.text;
+                                if (!uniqueGroups.has(key)) {
+                                    uniqueGroups.set(key, t);
+                                }
+                            }
+                        });
+
+                        uniqueGroups.forEach(templateTask => {
+                            const taskId = generateId();
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', taskId), { 
+                                groupId: templateTask.groupId || generateId(), 
+                                text: templateTask.text, 
+                                category: templateTask.category || 'General', 
+                                completed: false, 
+                                assigneeId: newId, 
+                                resetInterval: templateTask.resetInterval || null, 
+                                nextReset: null,
+                                maxCompletions: templateTask.maxCompletions || null,
+                                currentCompletions: 0,
+                                createdAt: Date.now()
+                            }).catch(console.error);
+                        });
+                    }
                 }).catch(console.error);
+                
                 input.value = '';
                 restDayCbs.forEach(cb => cb.checked = false); // clear checks
             }
@@ -1177,7 +1240,9 @@
         // --- Dashboard Logic ---
         function renderDashboard() {
             if(!currentUser) return;
-            const visibleTasks = currentUser.role === 'lead' ? todos : todos.filter(t => t.assigneeId === currentUser.id);
+            
+            const validTodos = todos.filter(t => team.some(m => m.id === t.assigneeId));
+            const visibleTasks = currentUser.role === 'lead' ? validTodos : validTodos.filter(t => t.assigneeId === currentUser.id);
             
             const total = visibleTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
             const completed = visibleTasks.reduce((sum, t) => {
@@ -1205,7 +1270,7 @@
                     teamProgressList.innerHTML = `<p class="text-sm text-slate-500">No members to track.</p>`;
                 } else {
                     teamProgressList.innerHTML = members.map(m => {
-                        const mTasks = todos.filter(t => t.assigneeId === m.id);
+                        const mTasks = validTodos.filter(t => t.assigneeId === m.id);
                         const mTotal = mTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
                         const mComp = mTasks.reduce((sum, t) => {
                             if (t.maxCompletions) return sum + Math.min(t.currentCompletions || 0, t.maxCompletions);
@@ -1268,7 +1333,9 @@
 
         window.handlePerformArchiveDay = function(isSilent = false) {
             if (!currentUser || currentUser.role !== 'lead' || !fbUser) return;
-            if (todos.length === 0) {
+            
+            const validTodos = todos.filter(t => team.some(m => m.id === t.assigneeId));
+            if (validTodos.length === 0) {
                 if (!isSilent) window.handleShowModal("Nothing to Record", "There are no active tasks to record today.", false);
                 return;
             }
@@ -1276,7 +1343,7 @@
             const executeArchive = () => {
                 const members = team.filter(t => t.role === 'member');
                 const memberStats = members.map(m => {
-                    const mTasks = todos.filter(t => t.assigneeId === m.id);
+                    const mTasks = validTodos.filter(t => t.assigneeId === m.id);
                     const totalActions = mTasks.reduce((sum, t) => sum + (t.maxCompletions || 1), 0);
                     const completedActions = mTasks.reduce((sum, t) => {
                         if (t.maxCompletions) return sum + Math.min(t.currentCompletions || 0, t.maxCompletions);
@@ -1291,7 +1358,7 @@
                 const report = {
                     id: 'r' + Date.now(),
                     date: reportDate,
-                    totalTasks: todos.reduce((sum, t) => sum + (t.maxCompletions || 1), 0),
+                    totalTasks: validTodos.reduce((sum, t) => sum + (t.maxCompletions || 1), 0),
                     memberStats: memberStats,
                     createdAt: Date.now()
                 };
@@ -1330,11 +1397,13 @@
             if(!currentUser || !list) return;
             list.innerHTML = '';
             
+            // Clean display immediately by ignoring orphaned tasks
+            const validTodos = todos.filter(t => team.some(m => m.id === t.assigneeId));
             let displayItems = [];
             
             if (currentUser.role === 'lead') {
                 const groupedMap = new Map();
-                todos.forEach(t => {
+                validTodos.forEach(t => {
                     const key = t.groupId || t.text;
                     if (!groupedMap.has(key)) {
                         groupedMap.set(key, { 
@@ -1351,7 +1420,7 @@
                     if (isFullyDone) group.completed += 1;
                 });
             } else {
-                displayItems = todos.filter(t => t.assigneeId === currentUser.id);
+                displayItems = validTodos.filter(t => t.assigneeId === currentUser.id);
             }
             
             if (displayItems.length === 0) {
@@ -1567,8 +1636,9 @@
             if(currentUser && currentUser.role === 'lead' && fbUser) {
                 window.handleShowModal("Clear Completed", "Are you sure you want to clear all fully completed tasks from the list?", true, (confirmed) => {
                     if (confirmed) {
+                        const validTodos = todos.filter(t => team.some(m => m.id === t.assigneeId));
                         const groupedMap = new Map();
-                        todos.forEach(t => {
+                        validTodos.forEach(t => {
                             const key = t.groupId || t.text;
                             if (!groupedMap.has(key)) groupedMap.set(key, { total: 0, completed: 0 });
                             const group = groupedMap.get(key);
@@ -1584,7 +1654,7 @@
                             }
                         });
 
-                        todos.forEach(t => {
+                        validTodos.forEach(t => {
                             const key = t.groupId || t.text;
                             if (completedKeys.has(key)) {
                                 deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'team_tasks', t.id)).catch(console.error);
